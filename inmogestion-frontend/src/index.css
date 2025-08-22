@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+/* Tema personalizado */
+:root {
+  --color-primary: #1E3A8A; /* Azul oscuro */
+  --color-secondary: #F59E0B; /* Amarillo */
+  --color-accent: #10B981; /* Verde */
+  --color-background: #F3F4F6; /* Gris claro */
+  --color-text: #111827; /* Gris oscuro */
+}
+
