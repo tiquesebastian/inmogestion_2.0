@@ -1,18 +1,23 @@
 import express from "express";
 import {
-    obtenerClientes,
-    agregarCliente,
-    obtenerClientePorId,
-    actualizarCliente,
-    eliminarCliente,
+  getClientes,
+  createCliente,
+  updateCliente,
+  deleteCliente,
 } from "../controllers/cliente.controller.js";
 
 const router = express.Router();
 
-router.get("/", obtenerClientes);
-router.post("/", agregarCliente);
-router.get("/:id", obtenerClientePorId);
-router.put("/:id", actualizarCliente);
-router.delete("/:id", eliminarCliente);
+// Obtener todos los clientes
+router.get("/", getClientes);
+
+// Crear cliente
+router.post("/", createCliente);
+
+// Actualizar cliente
+router.put("/:id", updateCliente);
+
+// Eliminar cliente
+router.delete("/:id", deleteCliente);
 
 export default router;
