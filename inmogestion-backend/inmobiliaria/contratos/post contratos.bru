@@ -1,0 +1,27 @@
+meta {
+  name: post contratos
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:3000/api/contratos
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "fecha_contrato": "2025-08-30",
+    "valor_venta": 250000000,
+    "fecha_venta": "2025-08-30",
+    "archivo_pdf": "contrato123.pdf",
+    "id_propiedad": 1,
+    "id_cliente": 1,
+    "id_usuario": 1
+  }
+}
+
+settings {
+  encodeUrl: true
+}

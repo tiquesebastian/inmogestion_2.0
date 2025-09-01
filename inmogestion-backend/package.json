@@ -9,7 +9,7 @@
     "start": "node src/server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Tu Nombre o Empresa",
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",

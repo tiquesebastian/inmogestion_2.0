@@ -1,0 +1,29 @@
+meta {
+  name: Calcular total de ventas en un rango
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:3000/api/reportes/ventas/total?fecha_inicio=2025-08-01&fecha_fin=2025-08-31
+  body: json
+  auth: inherit
+}
+
+params:query {
+  fecha_inicio: 2025-08-01
+  fecha_fin: 2025-08-31
+}
+
+body:json {
+  {
+    "fecha_inicio": "2025-08-01",
+    "fecha_fin": "2025-08-31",
+    "id_usuario": 1
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

@@ -11,6 +11,25 @@ export const getClientes = async (req, res) => {
   }
 };
 
+// Obtener cliente por ID
+export const getClienteById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await db.query("SELECT * FROM cliente WHERE id_cliente = ?", [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Cliente no encontrado" });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error("❌ Error al obtener cliente por ID:", error);
+    res.status(500).json({ message: "Error al obtener cliente por ID", error });
+  }
+};
+
+
 // Crear cliente
 export const createCliente = async (req, res) => {
   try {

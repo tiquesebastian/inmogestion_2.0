@@ -1,0 +1,24 @@
+meta {
+  name: Reporte propiedades disponibles
+  type: http
+  seq: 8
+}
+
+get {
+  url: http://localhost:3000/api/reportes/propiedades-disponibles
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "fecha_inicio": "2025-08-01",
+    "fecha_fin": "2025-08-31",
+    "id_usuario": 1
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

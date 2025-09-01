@@ -4,6 +4,11 @@ import dotenv from 'dotenv';
 import clienteRoutes from "./routes/cliente.routes.js";
 import db from "./config/db.js";
 import propiedadRoutes from "./routes/propiedad.routes.js";
+import contratoRoutes from "./routes/contrato.routes.js";
+import reporteRoutes from "./routes/reporte.routes.js";
+import historialRoutes from "./routes/historial.routes.js";
+import interaccionRoutes from "./routes/interaccion.routes.js";
+
 
 // Cargar variables del .env
 dotenv.config();
@@ -24,7 +29,10 @@ app.get('/', (req, res) => {
 
 app.use("/api/clientes", clienteRoutes);
 app.use("/api/propiedades", propiedadRoutes);
-
+app.use("/api/contratos", contratoRoutes);
+app.use("/api/reportes", reporteRoutes);
+app.use("/api/historial", historialRoutes);
+app.use("/api/interacciones", interaccionRoutes);
 
 // Iniciar servidor
 app.listen(PORT, () => {
@@ -36,3 +44,4 @@ app.listen(PORT, () => {
 //app.listen(PORT, () => {
   //console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 //});
+
