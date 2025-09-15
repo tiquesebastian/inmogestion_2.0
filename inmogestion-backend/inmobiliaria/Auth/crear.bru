@@ -1,0 +1,23 @@
+meta {
+  name: crear
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:3000/api/auth/login
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "correo": "tiquegmail.com",
+    "contrasena": "azb"
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}

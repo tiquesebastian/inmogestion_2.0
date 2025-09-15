@@ -36,25 +36,49 @@ export const getContratoById = async (req, res) => {
   }
 };
 
-//  Crear un nuevo contrato
+// Crear contrato con validaciones
 export const createContrato = async (req, res) => {
   try {
     const { fecha_contrato, valor_venta, fecha_venta, archivo_pdf, id_propiedad, id_cliente, id_usuario } = req.body;
 
-    // Validación básica: campos obligatorios
-    if (!fecha_contrato || !valor_venta || !fecha_venta || !id_propiedad || !id_cliente || !id_usuario) {
-      return res.status(400).json({ message: "Faltan datos obligatorios" });
+    // Validaciones básicas
+    if (!fecha_contrato || !valor_venta || !id_propiedad || !id_cliente || !id_usuario) {
+      return res.status(400).json({ message: "Todos los campos obligatorios deben estar completos" });
     }
 
+    if (valor_venta <= 0) {
+      return res.status(400).json({ message: "El valor de venta debe ser mayor a 0" });
+    }
+
+    // Verificar existencia de propiedad
+    const [propiedad] = await db.query("SELECT * FROM propiedad WHERE id_propiedad = ?", [id_propiedad]);
+    if (propiedad.length === 0) {
+      return res.status(404).json({ message: "La propiedad no existe" });
+    }
+
+    // Verificar existencia de cliente
+    const [cliente] = await db.query("SELECT * FROM cliente WHERE id_cliente = ?", [id_cliente]);
+    if (cliente.length === 0) {
+      return res.status(404).json({ message: "El cliente no existe" });
+    }
+
+    // Verificar existencia de usuario (agente/admin)
+    const [usuario] = await db.query("SELECT * FROM usuario WHERE id_usuario = ?", [id_usuario]);
+    if (usuario.length === 0) {
+      return res.status(404).json({ message: "El usuario no existe" });
+    }
+
+    // Insertar contrato
     const [result] = await db.query(
-      `INSERT INTO contrato (fecha_contrato, valor_venta, fecha_venta, archivo_pdf, id_propiedad, id_cliente, id_usuario)
+      `INSERT INTO contrato 
+        (fecha_contrato, valor_venta, fecha_venta, archivo_pdf, id_propiedad, id_cliente, id_usuario) 
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [fecha_contrato, valor_venta, fecha_venta, archivo_pdf, id_propiedad, id_cliente, id_usuario]
+      [fecha_contrato, valor_venta, fecha_venta || null, archivo_pdf || null, id_propiedad, id_cliente, id_usuario]
     );
 
     res.status(201).json({
       message: "Contrato creado exitosamente",
-      contratoId: result.insertId // Devuelve el ID del nuevo contrato
+      contratoId: result.insertId,
     });
   } catch (error) {
     res.status(500).json({ message: "Error al crear contrato", error });

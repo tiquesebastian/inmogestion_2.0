@@ -1,0 +1,35 @@
+meta {
+  name: actualizar contratos
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:3000/api/contratos/2
+  body: json
+  auth: inherit
+}
+
+body:json {
+    {
+      "id_contrato": 2,
+      "fecha_contrato": "2025-09-01",
+      "valor_venta": "180000000.00",
+      "fecha_venta": "2025-05-01",
+      "archivo_pdf": "contrato124.pdf",
+      "id_propiedad": 2,
+      "id_cliente": 2,
+      "id_usuario": 2,
+      "estado_contrato": "Finalizado",
+      "nombre_cliente": "María",
+      "apellido_cliente": "López",
+      "tipo_propiedad": "Apartamento",
+      "agente": "Ana"
+    }
+  
+  
+}
+
+settings {
+  encodeUrl: true
+}

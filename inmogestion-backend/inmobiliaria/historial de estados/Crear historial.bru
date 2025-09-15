@@ -1,0 +1,25 @@
+meta {
+  name: Crear historial
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:3000/api/historial
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "estado_anterior": "Disponible",
+    "estado_nuevo": "Reservada",
+    "justificacion": "Cliente interesado",
+    "id_propiedad": 2,
+    "id_usuario": 2
+  }
+}
+
+settings {
+  encodeUrl: true
+}

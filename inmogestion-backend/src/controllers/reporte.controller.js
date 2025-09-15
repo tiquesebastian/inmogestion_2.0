@@ -31,35 +31,45 @@ export const getReporteById = async (req, res) => {
   }
 };
 
-//  Crear un nuevo reporte de ventas
+
+// Crear reporte de ventas con validaciones
 export const createReporte = async (req, res) => {
   try {
     const { fecha_inicio, fecha_fin, id_usuario } = req.body;
 
-    // Validar campos obligatorios
     if (!fecha_inicio || !fecha_fin || !id_usuario) {
-      return res.status(400).json({ message: "Todos los campos son obligatorios" });
+      return res.status(400).json({ message: "Todos los campos obligatorios deben estar completos" });
     }
 
-    //  Calcular automáticamente el total de ventas en el rango indicado
+    // Validar rango de fechas
+    if (new Date(fecha_inicio) > new Date(fecha_fin)) {
+      return res.status(400).json({ message: "La fecha de inicio no puede ser mayor a la fecha fin" });
+    }
+
+    // Verificar existencia de usuario
+    const [usuario] = await db.query("SELECT * FROM usuario WHERE id_usuario = ?", [id_usuario]);
+    if (usuario.length === 0) {
+      return res.status(404).json({ message: "El usuario no existe" });
+    }
+
+    // Calcular total de ventas en ese rango
     const [ventas] = await db.query(
-      `SELECT SUM(valor_venta) AS total_ventas 
-       FROM contrato 
-       WHERE fecha_venta BETWEEN ? AND ?`,
-      [fecha_inicio, fecha_fin]
+      "SELECT SUM(valor_venta) AS total FROM contrato WHERE fecha_contrato BETWEEN ? AND ? AND id_usuario = ?",
+      [fecha_inicio, fecha_fin, id_usuario]
     );
 
-    const total_ventas = ventas[0].total_ventas || 0; // Si no hay ventas, se asigna 0
+    const total_ventas = ventas[0].total || 0;
 
-    //  Insertar el reporte con total de ventas incluido
+    // Insertar reporte
     const [result] = await db.query(
-      "INSERT INTO reporte_ventas (fecha_inicio, fecha_fin, total_ventas, id_usuario) VALUES (?, ?, ?, ?)",
+      `INSERT INTO reporte_ventas (fecha_inicio, fecha_fin, total_ventas, id_usuario) 
+       VALUES (?, ?, ?, ?)`,
       [fecha_inicio, fecha_fin, total_ventas, id_usuario]
     );
 
     res.status(201).json({
       message: "Reporte creado exitosamente",
-      id_reporte: result.insertId, // ID del nuevo reporte
+      reporteId: result.insertId,
       total_ventas,
     });
   } catch (error) {

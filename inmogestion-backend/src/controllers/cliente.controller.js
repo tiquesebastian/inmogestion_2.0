@@ -1,13 +1,13 @@
 import db from "../config/db.js";
 
-// Obtener todos los clientes
+// Obtener todos los clientes ordenados por id_cliente DESC
 export const getClientes = async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM cliente");
-    res.json(rows);
+    const [rows] = await db.query("SELECT * FROM cliente ORDER BY id_cliente DESC");
+    res.status(200).json(rows);
   } catch (error) {
     console.error("❌ Error al obtener clientes:", error);
-    res.status(500).json({ message: "Error al obtener clientes", error });
+    res.status(500).json({ message: "Error al obtener clientes" });
   }
 };
 
@@ -15,33 +15,47 @@ export const getClientes = async (req, res) => {
 export const getClienteById = async (req, res) => {
   try {
     const { id } = req.params;
-
     const [rows] = await db.query("SELECT * FROM cliente WHERE id_cliente = ?", [id]);
 
     if (rows.length === 0) {
       return res.status(404).json({ message: "Cliente no encontrado" });
     }
 
-    res.json(rows[0]);
+    res.status(200).json(rows[0]);
   } catch (error) {
-    console.error("❌ Error al obtener cliente por ID:", error);
-    res.status(500).json({ message: "Error al obtener cliente por ID", error });
+    console.error("❌ Error al obtener cliente:", error);
+    res.status(500).json({ message: "Error al obtener cliente" });
   }
 };
 
-
-// Crear cliente
+// Crear cliente con validaciones
 export const createCliente = async (req, res) => {
   try {
     const { nombre_cliente, apellido_cliente, documento_cliente, correo_cliente, telefono_cliente } = req.body;
 
-    if (!nombre_cliente || !apellido_cliente || !documento_cliente) {
-      return res.status(400).json({ message: "Faltan datos obligatorios" });
+    // Validar campos obligatorios
+    if (!nombre_cliente || !apellido_cliente || !documento_cliente || !correo_cliente) {
+      return res.status(400).json({ message: "Todos los campos obligatorios deben estar completos" });
     }
 
+    // Verificar duplicados (documento)
+    const [[docExist]] = await db.query("SELECT 1 FROM cliente WHERE documento_cliente = ?", [documento_cliente]);
+    if (docExist) {
+      return res.status(409).json({ message: "El documento ya está registrado" });
+    }
+
+    // Verificar duplicados (correo)
+    const [[correoExist]] = await db.query("SELECT 1 FROM cliente WHERE correo_cliente = ?", [correo_cliente]);
+    if (correoExist) {
+      return res.status(409).json({ message: "El correo ya está registrado" });
+    }
+
+    // Insertar cliente
     const [result] = await db.query(
-      "INSERT INTO cliente (nombre_cliente, apellido_cliente, documento_cliente, correo_cliente, telefono_cliente) VALUES (?, ?, ?, ?, ?)",
-      [nombre_cliente, apellido_cliente, documento_cliente, correo_cliente, telefono_cliente]
+      `INSERT INTO cliente 
+      (nombre_cliente, apellido_cliente, documento_cliente, correo_cliente, telefono_cliente) 
+      VALUES (?, ?, ?, ?, ?)`,
+      [nombre_cliente, apellido_cliente, documento_cliente, correo_cliente, telefono_cliente || null]
     );
 
     res.status(201).json({
@@ -50,25 +64,32 @@ export const createCliente = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error al crear cliente:", error);
-    res.status(500).json({ message: "Error al crear cliente", error });
+    res.status(500).json({ message: "Error al crear cliente" });
   }
 };
 
-// Actualizar cliente
+// Actualizar cliente (validar que exista primero)
 export const updateCliente = async (req, res) => {
   try {
     const { id } = req.params;
     const { nombre_cliente, apellido_cliente, documento_cliente, correo_cliente, telefono_cliente } = req.body;
 
+    const [rows] = await db.query("SELECT * FROM cliente WHERE id_cliente = ?", [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Cliente no encontrado" });
+    }
+
     await db.query(
-      "UPDATE cliente SET nombre_cliente=?, apellido_cliente=?, documento_cliente=?, correo_cliente=?, telefono_cliente=? WHERE id_cliente=?",
+      `UPDATE cliente 
+      SET nombre_cliente=?, apellido_cliente=?, documento_cliente=?, correo_cliente=?, telefono_cliente=? 
+      WHERE id_cliente=?`,
       [nombre_cliente, apellido_cliente, documento_cliente, correo_cliente, telefono_cliente, id]
     );
 
-    res.json({ message: "Cliente actualizado exitosamente" });
+    res.status(200).json({ message: "Cliente actualizado exitosamente" });
   } catch (error) {
     console.error("❌ Error al actualizar cliente:", error);
-    res.status(500).json({ message: "Error al actualizar cliente", error });
+    res.status(500).json({ message: "Error al actualizar cliente" });
   }
 };
 
@@ -76,12 +97,15 @@ export const updateCliente = async (req, res) => {
 export const deleteCliente = async (req, res) => {
   try {
     const { id } = req.params;
+    const [result] = await db.query("DELETE FROM cliente WHERE id_cliente = ?", [id]);
 
-    await db.query("DELETE FROM cliente WHERE id_cliente=?", [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Cliente no encontrado" });
+    }
 
-    res.json({ message: "Cliente eliminado exitosamente" });
+    res.status(200).json({ message: "Cliente eliminado exitosamente" });
   } catch (error) {
     console.error("❌ Error al eliminar cliente:", error);
-    res.status(500).json({ message: "Error al eliminar cliente", error });
+    res.status(500).json({ message: "Error al eliminar cliente" });
   }
 };

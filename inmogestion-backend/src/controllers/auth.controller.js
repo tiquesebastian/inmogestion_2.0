@@ -2,6 +2,7 @@ import db from "../config/db.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+// LOGIN
 export const login = async (req, res) => {
   try {
     const { correo, contrasena } = req.body;
