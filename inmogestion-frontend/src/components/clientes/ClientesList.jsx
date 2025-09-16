@@ -49,6 +49,10 @@ function ClientesList() {
       <ClienteForm onAdd={handleAddCliente} />
 
       {/* Tabla de clientes */}
+       {/* Tabla de clientes o mensaje si está vacía */}
+      {clientes.length === 0 ? (
+        <p className="text-gray-500 mt-4">No hay clientes registrados.</p>
+      ) : (
       <table className="w-full border mt-6">
         <thead className="bg-gray-200">
           <tr>
@@ -81,6 +85,7 @@ function ClientesList() {
           ))}
         </tbody>
       </table>
+      )}
     </div>
   );
 }
