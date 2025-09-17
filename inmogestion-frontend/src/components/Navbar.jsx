@@ -1,37 +1,30 @@
-// src/components/Navbar.jsx
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
-function Navbar() {
+export default function Navbar() {
+  const navItems = [
+    { path: "/", label: "Inicio" },
+    { path: "/servicios", label: "Servicios" },
+    { path: "/contacto", label: "Contacto" },
+  ];
+
   return (
-    <nav className="bg-blue-600 text-white px-6 py-4 shadow-md flex justify-between items-center">
-      {/* Logo */}
-      <Link to="/" className="text-2xl font-bold">
-        InmoGestión
-      </Link>
-
-      {/* Menú */}
-      <div className="space-x-6">
-        <Link
-          to="/"
-          className="hover:text-gray-200 transition-colors duration-200"
-        >
-          Inicio
-        </Link>
-        <Link
-          to="/login"
-          className="hover:text-gray-200 transition-colors duration-200"
-        >
-          Login
-        </Link>
-        <Link
-          to="/admin"
-          className="hover:text-gray-200 transition-colors duration-200"
-        >
-          Admin
-        </Link>
-      </div>
+    <nav className="bg-gray-100 p-4 rounded-md shadow">
+      <ul className="flex space-x-6">
+        {navItems.map((item) => (
+          <li key={item.path}>
+            <NavLink
+              to={item.path}
+              className={({ isActive }) =>
+                `px-3 py-2 rounded-md transition ${
+                  isActive ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-200"
+                }`
+              }
+            >
+              {item.label}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
     </nav>
   );
 }
-
-export default Navbar;

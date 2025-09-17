@@ -1,23 +1,24 @@
-import axios from "axios";
+// src/services/api.js
 
-// Creamos una instancia de Axios con una URL base para todas las peticiones
-const api = axios.create({
-  baseURL: "http://localhost:3000/api", // Ajusta la URL base y puerto según tu backend
-});
+const API_URL = import.meta.env.VITE_API_URL;
 
-// Interceptor que se ejecuta antes de cada petición
-// Se utiliza para agregar el token de autenticación en el header Authorization
-api.interceptors.request.use((config) => {
-  // Obtenemos el token almacenado en localStorage
-  const token = localStorage.getItem("token");
-  
-  // Si existe un token, lo añadimos al header Authorization como Bearer token
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  
-  // Retornamos la configuración modificada para que la petición continúe
-  return config;
-});
+// ==== Subir archivo (Carga Masiva) ====
+export async function uploadFile(file) {
+  const formData = new FormData();
+  formData.append("file", file);
 
-export default api;
+  const res = await fetch(`${API_URL}/upload`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) throw new Error("Error al subir archivo");
+  return res.json();
+}
+
+// ==== Ejemplo: consumir saludo ====
+export async function getSaludo() {
+  const res = await fetch(`${API_URL}/saludo`);
+  if (!res.ok) throw new Error("Error al obtener saludo");
+  return res.json();
+}
