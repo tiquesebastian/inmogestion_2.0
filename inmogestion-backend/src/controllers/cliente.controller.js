@@ -1,4 +1,33 @@
 import db from "../config/db.js";
+import nodemailer from 'nodemailer';
+
+// Configurar el transporte de correo (usando un servicio como Gmail, SMTP, etc.)
+const transporter = nodemailer.createTransport({
+  service: 'gmail', // Puedes usar otro servicio como SMTP si prefieres
+  auth: {
+    user: 'tucorreo@gmail.com', // Tu correo de envío
+    pass: 'tu_contraseña_de_aplicacion', // Tu contraseña de aplicación (si usas Gmail con 2FA)
+  },
+});
+
+// Función para enviar correo de bienvenida
+const sendWelcomeEmail = (email, nombre) => {
+  const mailOptions = {
+    from: 'tucorreo@gmail.com', // Correo de envío
+    to: email, // Correo del cliente
+    subject: 'Bienvenido a InmoGestion', // Asunto del correo
+    text: `Hola ${nombre},\n\n¡Gracias por registrarte en InmoGestion! Estamos felices de tenerte con nosotros.\n\nSaludos,\nEl equipo de InmoGestion`, // Contenido del correo
+  };
+
+  // Enviar el correo
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.log("❌ Error al enviar correo de bienvenida:", error);
+    } else {
+      console.log("✅ Correo de bienvenida enviado: " + info.response);
+    }
+  });
+};
 
 // Obtener todos los clientes ordenados por id_cliente DESC
 export const getClientes = async (req, res) => {
@@ -57,6 +86,9 @@ export const createCliente = async (req, res) => {
       VALUES (?, ?, ?, ?, ?)`,
       [nombre_cliente, apellido_cliente, documento_cliente, correo_cliente, telefono_cliente || null]
     );
+
+    // Enviar correo de bienvenida después de registrar al cliente
+    sendWelcomeEmail(correo_cliente, nombre_cliente);
 
     res.status(201).json({
       message: "Cliente creado exitosamente",

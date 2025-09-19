@@ -59,6 +59,7 @@ DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=tu_contraseña
 DB_NAME=inmogestion
+
 JWT_SECRET=clave_secreta
 ▶️ Cómo ejecutar el proyecto
 Clona este repositorio

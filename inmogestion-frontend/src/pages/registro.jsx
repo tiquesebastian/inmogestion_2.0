@@ -26,7 +26,7 @@ export default function Registro() {
     e.preventDefault(); // evita recargar la página
 
     try {
-      const res = await fetch("/api/usuarios", {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)

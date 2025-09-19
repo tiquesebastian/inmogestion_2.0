@@ -12,6 +12,7 @@ import historialRoutes from "./routes/historial.routes.js";
 import interaccionRoutes from "./routes/interaccion.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import usuarioRoutes from "./routes/usuario.routes.js";
+import authRegisterRoutes from "./routes/auth.register.routes.js";
 
 // Middlewares para seguridad y autorización
 import { verificarToken, verificarRol } from "./middleware/auth.middleware.js";
@@ -35,11 +36,14 @@ app.get('/', (req, res) => {
 
 // Rutas principales protegidas con autenticación y autorización
 
+
+
 // Rutas de usuarios: requieren token y rol (ejemplo: admin)
 app.use("/api/usuarios", verificarToken, verificarRol, usuarioRoutes);
 
 // Rutas de clientes: requieren token (usuario autenticado)
-app.use("/api/clientes", verificarToken, clienteRoutes);
+//app.use("/api/clientes", verificarToken, clienteRoutes);
+app.use("/api/clientes", clienteRoutes);
 
 // Rutas de propiedades: (en este ejemplo no están protegidas, agregar middleware si se desea)
 app.use("/api/propiedades", propiedadRoutes);

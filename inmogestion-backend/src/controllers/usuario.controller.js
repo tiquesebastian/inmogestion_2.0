@@ -1,39 +1,74 @@
-import db from "../config/db.js";      // Importar la configuración de la base de datos
-import bcrypt from "bcryptjs";         // Librería para comparar contraseñas hash
-import jwt from "jsonwebtoken";        // Librería para crear tokens JWT
+import db from "../config/db.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
+export const register = async (req, res) => {
+  console.log("📥 Datos recibidos en registro:", req.body);
+
+  try {
+    const { nombre, apellido, correo, telefono, nombre_usuario, contrasena, id_rol, estado } = req.body;
+
+    // Validar campos obligatorios
+    if (!nombre || !apellido || !correo || !nombre_usuario || !contrasena) {
+      return res.status(400).json({ message: "Faltan campos obligatorios" });
+    }
+
+    // Verificar que no exista el correo
+    const [correoExist] = await db.query("SELECT 1 FROM usuario WHERE correo = ?", [correo]);
+    if (correoExist.length > 0) {
+      return res.status(409).json({ message: "El correo ya está registrado" });
+    }
+
+    // Verificar que no exista el nombre_usuario
+    const [usuarioExist] = await db.query("SELECT 1 FROM usuario WHERE nombre_usuario = ?", [nombre_usuario]);
+    if (usuarioExist.length > 0) {
+      return res.status(409).json({ message: "El nombre de usuario ya está en uso" });
+    }
+
+    // Encriptar contraseña
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(contrasena, salt);
+
+    // Insertar usuario
+    const [result] = await db.query(
+      `INSERT INTO usuario (nombre, apellido, correo, telefono, nombre_usuario, contrasena, id_rol, estado)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nombre, apellido, correo, telefono || null, nombre_usuario, hashedPassword, id_rol || 3, estado || "Activo"]
+    );
+
+    res.status(201).json({ message: "Usuario registrado exitosamente", usuarioId: result.insertId });
+  } catch (error) {
+    console.error("Error al registrar usuario:", error);
+    res.status(500).json({ message: "Error al registrar usuario", error });
+  }
+};
 
 export const login = async (req, res) => {
   try {
-    const { correo, contrasena } = req.body;  // Extraer correo y contraseña del cuerpo de la solicitud
+    const { correo, contrasena } = req.body;
 
-    // Buscar usuario en la base de datos por correo
     const [rows] = await db.query("SELECT * FROM usuario WHERE correo = ?", [correo]);
 
-    // Si no se encuentra usuario, responder con error 404
     if (rows.length === 0) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    const usuario = rows[0];  // Obtener el usuario encontrado
+    const usuario = rows[0];
 
-    // Verificar que la contraseña ingresada coincida con la almacenada (hash)
     const esValida = await bcrypt.compare(contrasena, usuario.contrasena);
     if (!esValida) {
-      // Si la contraseña es incorrecta, responder con error 401 (no autorizado)
       return res.status(401).json({ message: "Contraseña incorrecta" });
     }
 
-    // Generar un token JWT que contiene la información básica del usuario
     const token = jwt.sign(
       {
-        id: usuario.id_usuario,   // ID del usuario
-        rol: usuario.id_rol,      // Rol del usuario para permisos
+        id: usuario.id_usuario,
+        rol: usuario.id_rol,
       },
-      process.env.JWT_SECRET || "secreto123",  // Clave secreta para firmar el token
-      { expiresIn: "1h" }                       // El token expira en 1 hora
+      process.env.JWT_SECRET || "secreto123",
+      { expiresIn: "1h" }
     );
 
-    // Enviar respuesta con token y datos del usuario
     res.json({
       message: "Login exitoso",
       token,
@@ -45,7 +80,6 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    // Manejar errores inesperados y enviar respuesta con código 500
     res.status(500).json({ message: "Error en el login", error });
   }
 };
