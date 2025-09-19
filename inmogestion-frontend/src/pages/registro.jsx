@@ -1,4 +1,6 @@
 import { useState } from "react";
+import emailjs from "emailjs-com";
+
 
 export default function Registro() {
   // 👉 Paso 1: Estado para guardar los datos del formulario
@@ -21,39 +23,61 @@ export default function Registro() {
     });
   };
 
-  // 👉 Paso 3: Aquí va tu handleSubmit
+  // 👉 Paso 3: Aquí va handleSubmit
   const handleSubmit = async (e) => {
-    e.preventDefault(); // evita recargar la página
+  e.preventDefault();
 
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+  try {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData)
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("✅ Registro exitoso");
+
+      // 👉 Enviar notificación por correo con EmailJS
+      emailjs
+        .send(
+          "service_xxx",   // tu Service ID de EmailJS
+          "template_xxx",  // tu Template ID de EmailJS
+          {
+            nombre: formData.nombre,
+            correo: formData.correo,
+            usuario: formData.nombre_usuario,
+          },
+          "publicKey_xxx"  // tu Public Key de EmailJS
+        )
+        .then(() => {
+          console.log("📧 Correo enviado correctamente");
+        })
+        .catch((err) => {
+          console.error("❌ Error enviando correo:", err);
+        });
+
+      // limpiar campos
+      setFormData({
+        nombre: "",
+        apellido: "",
+        correo: "",
+        telefono: "",
+        nombre_usuario: "",
+        contrasena: "",
+        id_rol: "3",
+        estado: "Activo"
       });
 
-      const data = await res.json();
+    } else {
+      alert("❌ Error: " + (data.message || "No se pudo registrar"));
+    }
+  } catch (err) {
+    alert("❌ Error de conexión con el servidor: " + err.message);
+  }
+};
 
-      if (res.ok) {
-        alert("✅ Registro exitoso");
-        // limpiar campos
-        setFormData({
-          nombre: "",
-          apellido: "",
-          correo: "",
-          telefono: "",
-          nombre_usuario: "",
-          contrasena: "",
-          id_rol: "3",
-          estado: "Activo"
-        });
-      } else {
-        alert("❌ Error: " + (data.message || "No se pudo registrar"));
-      }
-    } catch (err) {
-  alert("❌ Error de conexión con el servidor: " + err.message);
-}
-  };
 
   // 👉 Paso 4: Formulario que usa handleChange y handleSubmit
   return (
