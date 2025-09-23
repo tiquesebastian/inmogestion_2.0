@@ -1,0 +1,58 @@
+name: CI - InmoGestión
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies (frontend)
+        working-directory: inmogestion-frontend
+        run: npm install
+
+      - name: Build frontend
+        working-directory: inmogestion-frontend
+        run: npm run build
+
+      - name: Run frontend tests
+        working-directory: inmogestion-frontend
+        run: npm test
+
+      - name: Run frontend linter
+        working-directory: inmogestion-frontend
+        run: npm run lint
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies (backend)
+        working-directory: inmogestion-backend
+        run: npm install
+
+      - name: Run backend tests
+        working-directory: inmogestion-backend
+        run: npm test
+
+      - name: Run backend linter
+        working-directory: inmogestion-backend
+        run: npm run lint

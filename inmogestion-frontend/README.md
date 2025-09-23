@@ -1,4 +1,7 @@
+![CI](https://github.com/TU-USUARIO/TU-REPO/actions/workflows/main.yml/badge.svg)
+
 🧾 README.md general — ubicado en inmogestion-frontend/
+
 # InmoGestión Frontend
 
 Este es el frontend del proyecto **InmoGestión**, desarrollado con **React**, **Vite** y **TailwindCSS**. Aquí se construye la interfaz de usuario que se conecta al backend (API) para mostrar propiedades, gestionar contactos y más.
