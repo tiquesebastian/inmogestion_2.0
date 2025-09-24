@@ -1,4 +1,4 @@
-name: CI - InmoGestión Backend
+name: CI - inmogestión-backend
 
 on:
   push:
