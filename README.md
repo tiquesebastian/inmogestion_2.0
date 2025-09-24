@@ -1,3 +1,5 @@
 # InmoGestión 🏠
+# 🏡 InmoGestión
 
-![CI](https://github.com/tiquesebastian/InmoGestion/actions/workflows/main.yml/badge.svg)
+![Backend CI](https://github.com/tiquesebastian/InmoGestion/actions/workflows/backend.yml/badge.svg)
+
