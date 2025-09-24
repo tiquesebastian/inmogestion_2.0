@@ -1,6 +1,6 @@
 # 🏡 InmoGestión – Backend
 
-![CI](https://github.com/TU-USUARIO/TU-REPO/actions/workflows/main.yml/badge.svg)
+![CI](https://github.com/tiquesebastian/InmoGestion/actions/workflows/main.yml/badge.svg)
 
 
 Bienvenido al backend de **InmoGestión**, una plataforma de gestión inmobiliaria que permite administrar clientes, propiedades, contratos, reportes, historial de estados e interacciones entre agentes y clientes.
