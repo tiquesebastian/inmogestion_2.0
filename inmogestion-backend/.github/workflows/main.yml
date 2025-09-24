@@ -1,0 +1,38 @@
+name: CI - InmoGestión
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Clona el repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Configura Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      # 3. Instala dependencias
+      - name: Install dependencies
+        run: npm install
+
+      # 4. Valida que el proyecto compila (build del frontend React)
+      - name: Build project
+        run: npm run build --if-present
+
+      # 5. Corre pruebas unitarias (ejemplo con Jest)
+      - name: Run tests
+        run: npm test --if-present
+
+      # 6. Corre el linter (eslint)
+      - name: Run linter
+        run: npm run lint --if-present
