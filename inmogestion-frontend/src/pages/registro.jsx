@@ -11,7 +11,7 @@ export default function Registro() {
     telefono: "",
     nombre_usuario: "",
     contrasena: "",
-    id_rol: "3",   // Cliente por defecto
+    id_rol: "1",   // Cliente por defecto
     estado: "Activo"
   });
 
@@ -153,7 +153,6 @@ export default function Registro() {
         >
           <option value="1">Administrador</option>
           <option value="2">Agente</option>
-          <option value="3">Cliente</option>
         </select>
 
         <button
