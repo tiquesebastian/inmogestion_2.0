@@ -1,0 +1,25 @@
+meta {
+  name: Eliminar interaciones
+  type: http
+  seq: 3
+}
+
+delete {
+  url: http://localhost:3000/api/interacciones/2
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id_cliente": 2,
+    "id_usuario": 2,
+    "tipo_interaccion": "Mensaje",
+    "notas": "Cliente consultó por disponibilidad de propiedad"
+  }
+  
+}
+
+settings {
+  encodeUrl: true
+}
