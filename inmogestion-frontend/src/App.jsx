@@ -12,7 +12,7 @@ import Agentes from "./pages/agentes";
 import Contacto from "./pages/contacto";
 import Registro from "./pages/registro";
 import Login from "./pages/login";
-import CargaMasiva from "./pages/CargaMasiva"; // ✅ NUEVO
+
 
 // Componentes
 import Breadcrumbs from "./components/Breadcrumbs";
@@ -61,7 +61,6 @@ export default function App() {
             <Link to="/contacto" className={desktopLinkClass("/contacto")}>Contacto</Link>
             <Link to="/registro" className={desktopLinkClass("/registro")}>Registro</Link>
             <Link to="/login" className={desktopLinkClass("/login")}>Iniciar Sesión</Link>
-            <Link to="/carga-masiva" className={desktopLinkClass("/carga-masiva")}>Carga Masiva</Link>
           </nav>
 
           {/* Botón menú móvil */}
@@ -112,7 +111,6 @@ export default function App() {
           <Route path="/contacto" element={<Contacto />} />
           <Route path="/registro" element={<Registro />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/carga-masiva" element={<CargaMasiva />} />
           {/* Opcional: 404 */}
           <Route path="*" element={<h2 className="text-xl">Página no encontrada</h2>} />
         </Routes>
