@@ -57,11 +57,12 @@ Antes de comenzar, asegurate de tener instalado:
 Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
 
 ```env
-PORT=3000
+DB_PORT=3306
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=tu_contraseña
 DB_NAME=inmogestion
+
 
 JWT_SECRET=clave_secreta
 ▶️ Cómo ejecutar el proyecto

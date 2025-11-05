@@ -12,7 +12,6 @@ import historialRoutes from "./routes/historial.routes.js";
 import interaccionRoutes from "./routes/interaccion.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import usuarioRoutes from "./routes/usuario.routes.js";
-import authRegisterRoutes from "./routes/auth.register.routes.js";
 
 // Middlewares para seguridad y autorización
 import { verificarToken, verificarRol } from "./middleware/auth.middleware.js";

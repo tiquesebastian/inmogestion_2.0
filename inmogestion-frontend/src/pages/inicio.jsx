@@ -66,7 +66,7 @@ export default function Inicio() {
 
       {/* CTA final */}
       <div className="bg-blue-900 text-white py-16 text-center">
-        <h2 className="text-3xl font-bold">¿Listo para encontrar tu nuevo hogar?</h2>
+        <h2 className="text-3xl font-bold">¿quieres ser parte del equipo?</h2>
         <Link
           to="/registro"
           className="mt-6 inline-block bg-yellow-400 hover:bg-yellow-500 text-blue-900 font-semibold px-6 py-3 rounded-lg shadow-md transition"

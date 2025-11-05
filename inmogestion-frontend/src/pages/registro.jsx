@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import emailjs from "emailjs-com";
+import AuthContext from "../context/AuthContext";
 
 
 export default function Registro() {
-  // 👉 Paso 1: Estado para guardar los datos del formulario
+  // Estados para el formulario y validación
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
@@ -11,9 +13,12 @@ export default function Registro() {
     telefono: "",
     nombre_usuario: "",
     contrasena: "",
-    id_rol: "1",   // Cliente por defecto
+    id_rol: "1",   // 1 = Administrador
+    clave_maestra: "",
     estado: "Activo"
   });
+  
+  const [error, setError] = useState("");
 
   // 👉 Paso 2: Función para manejar cambios en los inputs
   const handleChange = (e) => {
@@ -23,21 +28,64 @@ export default function Registro() {
     });
   };
 
+  const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
+
   // 👉 Paso 3: Aquí va handleSubmit
   const handleSubmit = async (e) => {
   e.preventDefault();
+  setError("");
+
+  // Validar clave maestra (esto deberías cambiarlo por tu clave real)
+  const CLAVE_MAESTRA = "Admin2023!"; // Ejemplo - cámbiala por tu clave segura
+  if (formData.clave_maestra !== CLAVE_MAESTRA) {
+    setError("Clave maestra incorrecta. Este registro es solo para administradores.");
+    return;
+  }
 
   try {
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData)
+      body: JSON.stringify({
+        ...formData,
+        // No enviamos la clave maestra al backend
+        clave_maestra: undefined
+      })
     });
 
     const data = await res.json();
 
     if (res.ok) {
       alert("✅ Registro exitoso");
+
+      // Si el backend retorna el usuario creado (user, usuario o similar), lo usamos
+      const returnedUser = data.user || data.usuario || data;
+
+      // Si tenemos suficiente info, iniciamos sesión automáticamente
+      if (returnedUser && (returnedUser.rol || returnedUser.id_rol || returnedUser.role)) {
+        // Mapear rol por si viene numérico
+        let rolName = returnedUser.rol || returnedUser.role || null;
+        if (!rolName && returnedUser.id_rol) {
+          // Convenciones: 1->Administrador, 2->Agente, 3->Cliente
+          rolName = returnedUser.id_rol === 1 || returnedUser.id_rol === "1" ? "Administrador" : returnedUser.id_rol === 2 || returnedUser.id_rol === "2" ? "Agente" : "Usuario";
+        }
+
+        const userData = {
+          id: returnedUser.id || returnedUser._id || Date.now(),
+          nombre: returnedUser.nombre || formData.nombre || formData.nombre_usuario,
+          email: returnedUser.correo || formData.correo,
+          rol: rolName || (formData.id_rol === "1" ? "Administrador" : formData.id_rol === "2" ? "Agente" : "Usuario"),
+        };
+
+        // Guardar en contexto/localStorage
+        login(userData);
+
+        // Redirigir según rol
+        if (userData.rol === "Administrador") navigate("/admin");
+        else if (userData.rol === "Agente") navigate("/agente");
+        else navigate("/");
+      }
 
       // 👉 Enviar notificación por correo con EmailJS
       emailjs
@@ -145,15 +193,26 @@ export default function Registro() {
           required
         />
 
-        <select
-          name="id_rol"
-          value={formData.id_rol}
+        <input
+          type="password"
+          name="clave_maestra"
+          placeholder="Clave maestra (requerida para registro de administrador)"
+          value={formData.clave_maestra}
           onChange={handleChange}
           className="w-full p-2 border rounded-lg"
-        >
-          <option value="1">Administrador</option>
-          <option value="2">Agente</option>
-        </select>
+          required
+        />
+
+        {error && (
+          <div className="text-red-600 text-sm mb-4">
+            {error}
+          </div>
+        )}
+
+        <p className="text-sm text-gray-600 mb-4">
+          * Este formulario es solo para registro de administradores. 
+          Los agentes deben ser registrados por un administrador desde el panel de control.
+        </p>
 
         <button
           type="submit"

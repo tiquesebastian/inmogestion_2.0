@@ -88,7 +88,7 @@ export const inmuebles = {
       descripcion: "Apartamento de 3 habitaciones con vista a la ciudad y zonas verdes.",
       ubicacion: "Barrio Central, Ciudad Y",
       precio: "$150,000,000 COP",
-      imagen: "./images/apartamentos.jpeg",
+  imagen: "/images/apartamentos.jpeg",
     },
     {
       id: 2,
@@ -104,7 +104,7 @@ export const inmuebles = {
       descripcion: "Terraza amplia para disfrutar la vista y el aire fresco.",
       ubicacion: "Zona Urbana, Ciudad X",
       precio: "$180,000,000 COP",
-      imagen: "./images/AP_2_BALCON.jpg",
+  imagen: "/images/AP_2_BALCON.jpg",
     },
     {
       id: 4,

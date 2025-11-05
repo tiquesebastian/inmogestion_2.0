@@ -29,7 +29,16 @@ export default function Propiedades() {
       <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {inmuebles[tipo].map(({ id, titulo, descripcion, ubicacion, precio, imagen }) => (
           <div key={id} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
-            <img src={imagen} alt={titulo} className="h-48 w-full object-cover" />
+            <img
+              src={imagen}
+              alt={titulo}
+              className="h-48 w-full object-cover"
+              onError={(e) => {
+                // Si la imagen falla (404 o URL inválida), usamos un placeholder fiable
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "https://via.placeholder.com/800x480?text=Imagen+no+disponible";
+              }}
+            />
             <div className="p-4 flex flex-col flex-1">
               <h3 className="text-xl font-bold text-blue-900 mb-2">{titulo}</h3>
               <p className="text-gray-700 mb-2 flex-grow">{descripcion}</p>
