@@ -21,3 +21,6 @@ Gestionar propiedades
 Administrar usuarios
 Ver reportes
 Registrar nuevos agentes
+
+
+para agenete text : agente@test.com

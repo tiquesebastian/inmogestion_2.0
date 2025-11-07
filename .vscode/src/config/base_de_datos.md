@@ -1,4 +1,3 @@
-Script de base de datos:
 -- PROYECTO INMOGESTIÓN - SCRIPT MAESTRO
 -- Base de Datos + Datos Iniciales + Verificación
 -- ==========================================================
@@ -63,6 +62,13 @@ CREATE TABLE cliente (
     telefono_cliente VARCHAR(20),
     estado_cliente ENUM('Activo', 'Inactivo') DEFAULT 'Activo'
 );
+ALTER TABLE cliente
+  ADD COLUMN nombre_usuario VARCHAR(50) NULL,
+  ADD COLUMN contrasena VARCHAR(255) NULL,
+  ADD COLUMN reset_token VARCHAR(255) NULL,
+  ADD COLUMN reset_token_expires DATETIME NULL;
+-- Añadir índice para login
+CREATE INDEX idx_cliente_nombre_usuario ON cliente(nombre_usuario);
 
 -- PROPIEDADES
 CREATE TABLE propiedad (
@@ -150,6 +156,75 @@ ADD COLUMN fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 ALTER TABLE auditoria 
 ADD COLUMN tabla VARCHAR(50) AFTER id_auditoria;
+
+
+CREATE TABLE interes_propiedad (
+  id_interes INT PRIMARY KEY AUTO_INCREMENT,
+  id_propiedad INT NOT NULL,
+  id_cliente INT NULL, -- FK a cliente.id_cliente si cliente no autenticado, o a usuario si migras
+  nombre_cliente VARCHAR(150) NULL,
+  correo_cliente VARCHAR(150) NULL,
+  telefono_cliente VARCHAR(50) NULL,
+  mensaje TEXT NULL,
+  preferencias JSON NULL,
+  estado ENUM('Pendiente','Contactado','Agendado','Cancelado') DEFAULT 'Pendiente',
+  id_agente_asignado INT NULL,
+  fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_propiedad) REFERENCES propiedad(id_propiedad),
+  FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+  FOREIGN KEY (id_agente_asignado) REFERENCES usuario(id_usuario)
+);
+
+
+CREATE TABLE visita (
+  id_visita INT PRIMARY KEY AUTO_INCREMENT,
+  id_propiedad INT NOT NULL,
+  id_cliente INT NOT NULL,
+  id_agente INT NOT NULL,
+  fecha_visita DATETIME NOT NULL,
+  estado ENUM('Pendiente','Confirmada','Realizada','Cancelada') DEFAULT 'Pendiente',
+  notas TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_propiedad) REFERENCES propiedad(id_propiedad),
+  FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+  FOREIGN KEY (id_agente) REFERENCES usuario(id_usuario)
+);
+
+
+CREATE TABLE imagen_propiedad (
+  id_imagen INT PRIMARY KEY AUTO_INCREMENT,
+  id_propiedad INT NOT NULL,
+  url VARCHAR(512) NOT NULL,
+  prioridad INT DEFAULT 0,
+  descripcion VARCHAR(255),
+  fecha_subida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_propiedad) REFERENCES propiedad(id_propiedad)
+);
+
+
+CREATE TABLE notificacion (
+  id_notificacion INT PRIMARY KEY AUTO_INCREMENT,
+  tipo ENUM('EMAIL','WHATSAPP','SMS','PUSH'),
+  canal VARCHAR(50),
+  destinatario VARCHAR(255),
+  asunto VARCHAR(255),
+  contenido TEXT,
+  estado ENUM('Enviado','Error','Pendiente') DEFAULT 'Pendiente',
+  referencia_tipo VARCHAR(50), -- 'interes','visita','contrato', etc.
+  referencia_id INT,
+  fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE busqueda (
+  id_busqueda INT PRIMARY KEY AUTO_INCREMENT,
+  query_text VARCHAR(500),
+  filtros JSON,
+  id_usuario INT NULL,
+  fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
 
 

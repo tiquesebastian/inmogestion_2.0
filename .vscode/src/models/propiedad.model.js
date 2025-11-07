@@ -28,6 +28,8 @@ export const createPropiedad = async (data) => {
     direccion_formato,
     precio_propiedad,
     area_m2,
+    num_habitaciones,
+    num_banos,
     descripcion,
     estado_propiedad,
     id_barrio,
@@ -36,9 +38,9 @@ export const createPropiedad = async (data) => {
 
   const [result] = await db.query(
     `INSERT INTO propiedad 
-      (tipo_propiedad, direccion_formato, precio_propiedad, area_m2, descripcion, estado_propiedad, id_barrio, id_usuario)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [tipo_propiedad, direccion_formato, precio_propiedad, area_m2, descripcion, estado_propiedad, id_barrio, id_usuario]
+      (tipo_propiedad, direccion_formato, precio_propiedad, area_m2, num_habitaciones, num_banos, descripcion, estado_propiedad, id_barrio, id_usuario)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [tipo_propiedad, direccion_formato, precio_propiedad, area_m2, num_habitaciones, num_banos, descripcion, estado_propiedad, id_barrio, id_usuario]
   );
 
   return result.insertId;
@@ -55,6 +57,8 @@ export const updatePropiedad = async (id_propiedad, data) => {
     direccion_formato,
     precio_propiedad,
     area_m2,
+    num_habitaciones,
+    num_banos,
     descripcion,
     estado_propiedad,
     id_barrio,
@@ -63,9 +67,9 @@ export const updatePropiedad = async (id_propiedad, data) => {
 
   const [result] = await db.query(
     `UPDATE propiedad 
-     SET tipo_propiedad=?, direccion_formato=?, precio_propiedad=?, area_m2=?, descripcion=?, estado_propiedad=?, id_barrio=?, id_usuario=?
+     SET tipo_propiedad=?, direccion_formato=?, precio_propiedad=?, area_m2=?, num_habitaciones=?, num_banos=?, descripcion=?, estado_propiedad=?, id_barrio=?, id_usuario=?
      WHERE id_propiedad=?`,
-    [tipo_propiedad, direccion_formato, precio_propiedad, area_m2, descripcion, estado_propiedad, id_barrio, id_usuario, id_propiedad]
+    [tipo_propiedad, direccion_formato, precio_propiedad, area_m2, num_habitaciones, num_banos, descripcion, estado_propiedad, id_barrio, id_usuario, id_propiedad]
   );
 
   return result;

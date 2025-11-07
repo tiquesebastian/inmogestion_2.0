@@ -1,9 +1,15 @@
 import db from "../config/db.js";
+import { obtenerHistorialPorPropiedad, insertarHistorialEstado } from "../models/historialEstado.model.js";
 
 // Obtener historial completo
 export const getHistorial = async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM historial_estado_propiedad");
+    const { id_propiedad } = req.query;
+    if (id_propiedad) {
+      const rows = await obtenerHistorialPorPropiedad(id_propiedad);
+      return res.json(rows);
+    }
+    const [rows] = await db.query("SELECT * FROM historial_estado_propiedad ORDER BY fecha_cambio DESC");
     res.json(rows);
   } catch (error) {
     res.status(500).json({ message: "Error al obtener historial", error });
@@ -19,17 +25,8 @@ export const createHistorial = async (req, res) => {
       return res.status(400).json({ message: "Faltan datos obligatorios" });
     }
 
-    const [result] = await db.query(
-      `INSERT INTO historial_estado_propiedad 
-       (estado_anterior, estado_nuevo, justificacion, id_propiedad, id_usuario) 
-       VALUES (?, ?, ?, ?, ?)`,
-      [estado_anterior, estado_nuevo, justificacion || null, id_propiedad, id_usuario]
-    );
-
-    res.status(201).json({
-      message: "Historial registrado exitosamente",
-      historialId: result.insertId,
-    });
+    const id = await insertarHistorialEstado({ estado_anterior, estado_nuevo, justificacion, id_propiedad, id_usuario });
+    res.status(201).json({ message: "Historial registrado exitosamente", historialId: id });
   } catch (error) {
     res.status(500).json({ message: "Error al crear historial", error });
   }

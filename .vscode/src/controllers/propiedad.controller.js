@@ -1,3 +1,9 @@
+/**
+ * Controlador de propiedades
+ * Obtener propiedades filtradas por tipo, localidad y precio.
+ */
+
+import db from "../config/db.js";
 import {
   getAllPropiedades,
   getPropiedadById,
@@ -5,6 +11,50 @@ import {
   updatePropiedad,
   deletePropiedad,
 } from "../models/propiedad.model.js";
+/**
+ * Obtener propiedades filtradas por tipo, localidad y precio.
+ */
+export const obtenerPropiedadesFiltradas = async (req, res) => {
+  try {
+    const { tipo, localidad, precioMin, precioMax, habitaciones, banos } = req.query;
+    let query = `SELECT p.*, b.nombre_barrio, l.nombre_localidad, u.nombre AS agente FROM propiedad p
+      JOIN barrio b ON p.id_barrio = b.id_barrio
+      JOIN localidad l ON b.id_localidad = l.id_localidad
+      JOIN usuario u ON p.id_usuario = u.id_usuario
+      WHERE 1=1`;
+    const params = [];
+    if (tipo) {
+      query += " AND p.tipo_propiedad = ?";
+      params.push(tipo);
+    }
+    if (localidad) {
+      query += " AND l.nombre_localidad LIKE ?";
+      params.push(`%${localidad}%`);
+    }
+    if (precioMin) {
+      query += " AND p.precio_propiedad >= ?";
+      params.push(Number(precioMin));
+    }
+    if (precioMax) {
+      query += " AND p.precio_propiedad <= ?";
+      params.push(Number(precioMax));
+    }
+    if (habitaciones) {
+      query += " AND p.num_habitaciones >= ?";
+      params.push(Number(habitaciones));
+    }
+    if (banos) {
+      query += " AND p.num_banos >= ?";
+      params.push(Number(banos));
+    }
+    query += " AND p.estado_propiedad = 'Disponible' ORDER BY p.fecha_registro DESC";
+    const [rows] = await db.query(query, params);
+    res.json(rows);
+  } catch (error) {
+    console.error("Error en obtenerPropiedadesFiltradas:", error);
+    res.status(500).json({ message: "Error al filtrar propiedades", error: error.message });
+  }
+};
 
 /**
  * Obtener todas las propiedades registradas.
@@ -45,10 +95,12 @@ export const crearPropiedad = async (req, res) => {
       direccion_formato,
       precio_propiedad,
       area_m2,
+      num_habitaciones,
+      num_banos,
       descripcion,
       estado_propiedad,
       id_barrio,
-      id_usuario
+      id_usuario,
     } = req.body;
 
     // 🔍 Validar campos obligatorios
@@ -74,18 +126,27 @@ export const crearPropiedad = async (req, res) => {
     }
 
     // 🛠️ Crear propiedad si todo está OK
-    const [result] = await db.query(
-      "INSERT INTO propiedad (tipo_propiedad, direccion_formato, precio_propiedad, area_m2, descripcion, estado_propiedad, id_barrio, id_usuario) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      [tipo_propiedad, direccion_formato, precio_propiedad, area_m2, descripcion, estado_propiedad, id_barrio, id_usuario]
-    );
+    const insertId = await createPropiedad({
+      tipo_propiedad,
+      direccion_formato,
+      precio_propiedad,
+      area_m2,
+      num_habitaciones,
+      num_banos,
+      descripcion,
+      estado_propiedad,
+      id_barrio,
+      id_usuario,
+    });
 
-    res.status(201).json({
-      message: "Propiedad creada exitosamente",
-      propiedadId: result.insertId,
+    res.status(201).json({ 
+      message: "Propiedad creada exitosamente", 
+      propiedadId: insertId,
+      id_propiedad: insertId 
     });
   } catch (error) {
     console.error("❌ Error al crear propiedad:", error);
-    res.status(500).json({ message: "Error al crear propiedad", error });
+    res.status(500).json({ message: "Error al crear propiedad", error: error.message });
   }
 };
 
@@ -94,10 +155,34 @@ export const crearPropiedad = async (req, res) => {
  */
 export const actualizarPropiedad = async (req, res) => {
   try {
-    const result = await updatePropiedad(req.params.id, req.body);
+    const id = req.params.id;
+    // Obtener estado actual para registrar historial si cambia
+    const [actualRows] = await db.query("SELECT estado_propiedad FROM propiedad WHERE id_propiedad = ?", [id]);
+    const actual = actualRows && actualRows[0];
+
+    const result = await updatePropiedad(id, req.body);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Propiedad no encontrada" });
+    }
+
+    // Si se envía estado_propiedad y cambió, registrar en historial
+    if (req.body.estado_propiedad && actual && actual.estado_propiedad !== req.body.estado_propiedad) {
+      const estado_anterior = actual.estado_propiedad;
+      const estado_nuevo = req.body.estado_propiedad;
+      const justificacion = req.body.justificacion || null;
+      const id_usuario = req.body.id_usuario; // quien ejecuta el cambio
+      if (id_usuario) {
+        try {
+          await db.query(
+            `INSERT INTO historial_estado_propiedad (estado_anterior, estado_nuevo, justificacion, id_propiedad, id_usuario)
+             VALUES (?, ?, ?, ?, ?)`,
+            [estado_anterior, estado_nuevo, justificacion, id, id_usuario]
+          );
+        } catch (e) {
+          console.warn('No se pudo registrar historial de estado:', e.message);
+        }
+      }
     }
 
     res.json({ message: "Propiedad actualizada correctamente" });
@@ -122,3 +207,4 @@ export const eliminarPropiedad = async (req, res) => {
     res.status(500).json({ message: "Error al eliminar propiedad", error });
   }
 };
+

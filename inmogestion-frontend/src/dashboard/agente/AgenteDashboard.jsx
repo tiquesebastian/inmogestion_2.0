@@ -1,44 +1,75 @@
 import React, { useContext } from 'react';
-import { Link, Routes, Route, useNavigate } from "react-router-dom";
+import { Link, Routes, Route, useNavigate, Navigate, useLocation } from "react-router-dom";
 import PropiedadesAgente from "./PropiedadesAgente";
 import PerfilAgente from "./PerfilAgente";
+import RegistrarPropiedad from "./RegistrarPropiedad";
 import AuthContext from "../../context/AuthContext";
 
 export default function AgenteDashboard() {
   const { logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
+  // Breadcrumb interno para el dashboard
+  const getBreadcrumb = () => {
+    const path = location.pathname.replace('/agente/', '').replace('/agente', '');
+    const labels = {
+      'propiedades': 'Mis Propiedades',
+      'perfil': 'Mi Perfil',
+      'registrar-propiedad': 'Registrar Propiedad',
+    };
+    return labels[path] || 'Mis Propiedades';
+  };
+
   return (
-    <div className="dashboard flex">
-      <aside className="bg-blue-900 text-white p-6 min-h-screen w-64 flex flex-col">
-        <h2 className="text-2xl font-bold mb-8">Panel Agente</h2>
-        <nav className="space-y-4 flex-grow">
-          <Link to="propiedades" className="block hover:text-yellow-300">Mis Propiedades</Link>
-          <Link to="perfil" className="block hover:text-yellow-300">Mi Perfil</Link>
+    <div className="flex h-screen w-full bg-gray-100">
+      <aside className="bg-blue-900 text-white p-6 h-full w-64 flex flex-col fixed left-0 top-0 shadow-lg">
+        <div className="flex items-center gap-3 mb-8">
+          <img src="/logo.png" alt="Logo" className="h-12 w-auto" />
+          <h2 className="text-xl font-bold">Panel Agente</h2>
+        </div>
+        <nav className="space-y-2 flex-grow">
+          <Link to="/agente/propiedades" className={`block px-4 py-2 rounded transition ${location.pathname.includes('propiedades') && !location.pathname.includes('registrar-propiedad') ? 'bg-yellow-500 text-blue-900 font-semibold' : 'hover:bg-blue-800'}`}>
+            Mis Propiedades
+          </Link>
+          <Link to="/agente/registrar-propiedad" className={`block px-4 py-2 rounded transition ${location.pathname.includes('registrar-propiedad') ? 'bg-yellow-500 text-blue-900 font-semibold' : 'hover:bg-blue-800'}`}>
+            Registrar Propiedad
+          </Link>
+          <Link to="/agente/perfil" className={`block px-4 py-2 rounded transition ${location.pathname.includes('perfil') ? 'bg-yellow-500 text-blue-900 font-semibold' : 'hover:bg-blue-800'}`}>
+            Mi Perfil
+          </Link>
         </nav>
         <button
           onClick={handleLogout}
-          className="mt-auto bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition"
+          className="mt-auto bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition flex items-center justify-center gap-2"
         >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
           Cerrar Sesión
         </button>
       </aside>
 
-      <main className="flex-1 p-8">
+      <main className="flex-1 ml-64 p-8 overflow-auto">
+        {/* Breadcrumb interno */}
+        <div className="mb-6 text-sm text-gray-600">
+          <Link to="/" className="hover:text-blue-600">Inicio</Link>
+          <span className="mx-2">/</span>
+          <span className="text-blue-600 font-semibold">Agente</span>
+          <span className="mx-2">/</span>
+          <span className="text-gray-800 font-semibold">{getBreadcrumb()}</span>
+        </div>
+
         <Routes>
-          <Route path="propiedades" element={<PropiedadesAgente />} />
-          <Route path="perfil" element={<PerfilAgente />} />
-          <Route index element={
-            <div className="text-center mt-10">
-              <h1 className="text-3xl font-bold">Bienvenido a tu Panel de Agente</h1>
-              <p className="mt-4 text-gray-600">Selecciona una opción del menú para comenzar</p>
-            </div>
-          } />
+          <Route index element={<Navigate to="propiedades" replace />} />
+          <Route path="propiedades" element={<PropiedadesAgente key="propiedades" />} />
+          <Route path="registrar-propiedad" element={<RegistrarPropiedad key="registrar-propiedad" />} />
+          <Route path="perfil" element={<PerfilAgente key="perfil" />} />
         </Routes>
       </main>
     </div>

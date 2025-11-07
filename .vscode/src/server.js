@@ -10,8 +10,12 @@ import contratoRoutes from "./routes/contrato.routes.js";
 import reporteRoutes from "./routes/reporte.routes.js";
 import historialRoutes from "./routes/historial.routes.js";
 import interaccionRoutes from "./routes/interaccion.routes.js";
+import visitaRoutes from "./routes/visita.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import usuarioRoutes from "./routes/usuario.routes.js";
+import imagenRoutes from "./routes/imagen.routes.js";
+import localidadRoutes from "./routes/localidad.routes.js";
+import barrioRoutes from "./routes/barrio.routes.js";
 
 // Middlewares para seguridad y autorización
 import { verificarToken, verificarRol } from "./middleware/auth.middleware.js";
@@ -27,6 +31,9 @@ const PORT = process.env.PORT || 4000;
 // Middlewares globales
 app.use(cors()); // Permite solicitudes desde otros orígenes (CORS)
 app.use(express.json()); // Permite interpretar solicitudes con JSON en el cuerpo
+
+// Servir archivos estáticos (imágenes)
+app.use('/uploads', express.static('uploads'));
 
 // Ruta raíz para comprobar que el servidor está activo
 app.get('/', (req, res) => {
@@ -47,6 +54,13 @@ app.use("/api/clientes", clienteRoutes);
 // Rutas de propiedades: (en este ejemplo no están protegidas, agregar middleware si se desea)
 app.use("/api/propiedades", propiedadRoutes);
 
+// Rutas de imágenes de propiedades
+app.use("/api/imagenes", imagenRoutes);
+
+// Rutas de localidades y barrios
+app.use("/api/localidades", localidadRoutes);
+app.use("/api/barrios", barrioRoutes);
+
 // Rutas de contratos
 app.use("/api/contratos", contratoRoutes);
 
@@ -58,6 +72,9 @@ app.use("/api/historial", historialRoutes);
 
 // Rutas de interacciones
 app.use("/api/interacciones", interaccionRoutes);
+
+// Rutas de visitas (agendar, listar por agente)
+app.use("/api/visitas", visitaRoutes);
 
 // Rutas públicas (sin autenticación)
 // Aquí va el login, registro y otras rutas abiertas

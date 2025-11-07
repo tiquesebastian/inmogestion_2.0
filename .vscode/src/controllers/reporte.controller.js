@@ -1,5 +1,40 @@
-import db from "../config/db.js"; // Importa la conexión a la base de datos
+import db from "../config/db.js";
+import {
+  getResumenVentas,
+  getVentasPorAgente,
+  getVentasPorLocalidad,
+  getPropiedadesPorEstado,
+  getTopPropiedadesIntereses,
+  getFunnelConversion,
+  getClientesNuevos,
+  getTiempoPromedioCiclo,
+  getPropiedadesSinActividad,
+  getDashboardCompleto
+} from "../models/reporte.model.js";
 
+// Helper: validar y obtener rango de fechas de query params
+const obtenerRangoFechas = (req) => {
+  const { fecha_inicio, fecha_fin } = req.query;
+  
+  // Si no se proporcionan, usar últimos 30 días
+  if (!fecha_inicio || !fecha_fin) {
+    const hoy = new Date();
+    const hace30Dias = new Date();
+    hace30Dias.setDate(hoy.getDate() - 30);
+    
+    return {
+      fecha_inicio: hace30Dias.toISOString().split('T')[0],
+      fecha_fin: hoy.toISOString().split('T')[0]
+    };
+  }
+  
+  // Validar formato de fechas
+  if (new Date(fecha_inicio) > new Date(fecha_fin)) {
+    throw new Error("La fecha de inicio no puede ser mayor a la fecha fin");
+  }
+  
+  return { fecha_inicio, fecha_fin };
+};
 
 //  Obtener todos los reportes de ventas generados
 export const getReportes = async (req, res) => {
@@ -286,4 +321,155 @@ export const getVentasRealizadas = async (req, res) => {
   }
 };
 
+// ========== NUEVOS ENDPOINTS DE REPORTES ==========
+
+/**
+ * GET /api/reportes/dashboard
+ * Dashboard completo con todos los KPIs principales
+ */
+export const getDashboard = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const dashboard = await getDashboardCompleto(fecha_inicio, fecha_fin);
+    res.json(dashboard);
+  } catch (error) {
+    console.error("❌ Error obteniendo dashboard:", error);
+    res.status(500).json({ message: "Error al obtener dashboard", error: error.message });
+  }
+};
+
+/**
+ * GET /api/reportes/ventas/resumen
+ * Resumen de ventas en rango de fechas
+ */
+export const getResumenVentasController = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const resumen = await getResumenVentas(fecha_inicio, fecha_fin);
+    res.json({ periodo: { fecha_inicio, fecha_fin }, ...resumen });
+  } catch (error) {
+    console.error("❌ Error obteniendo resumen de ventas:", error);
+    res.status(500).json({ message: "Error al obtener resumen de ventas", error: error.message });
+  }
+};
+
+/**
+ * GET /api/reportes/ventas/agentes
+ * Ventas por agente en rango de fechas
+ */
+export const getVentasPorAgenteController = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const agentes = await getVentasPorAgente(fecha_inicio, fecha_fin);
+    res.json({ periodo: { fecha_inicio, fecha_fin }, agentes });
+  } catch (error) {
+    console.error("❌ Error obteniendo ventas por agente:", error);
+    res.status(500).json({ message: "Error al obtener ventas por agente", error: error.message });
+  }
+};
+
+/**
+ * GET /api/reportes/ventas/localidades
+ * Ventas por localidad en rango de fechas
+ */
+export const getVentasPorLocalidadController = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const localidades = await getVentasPorLocalidad(fecha_inicio, fecha_fin);
+    res.json({ periodo: { fecha_inicio, fecha_fin }, localidades });
+  } catch (error) {
+    console.error("❌ Error obteniendo ventas por localidad:", error);
+    res.status(500).json({ message: "Error al obtener ventas por localidad", error: error.message });
+  }
+};
+
+/**
+ * GET /api/reportes/propiedades/estado
+ * Distribución de propiedades por estado
+ */
+export const getPropiedadesPorEstadoController = async (req, res) => {
+  try {
+    const estados = await getPropiedadesPorEstado();
+    res.json({ estados });
+  } catch (error) {
+    console.error("❌ Error obteniendo propiedades por estado:", error);
+    res.status(500).json({ message: "Error al obtener propiedades por estado", error: error.message });
+  }
+};
+
+/**
+ * GET /api/reportes/propiedades/top-intereses
+ * Top propiedades con más intereses
+ */
+export const getTopPropiedadesInteresesController = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const limit = parseInt(req.query.limit) || 10;
+    const propiedades = await getTopPropiedadesIntereses(fecha_inicio, fecha_fin, limit);
+    res.json({ periodo: { fecha_inicio, fecha_fin }, propiedades });
+  } catch (error) {
+    console.error("❌ Error obteniendo top propiedades:", error);
+    res.status(500).json({ message: "Error al obtener top propiedades", error: error.message });
+  }
+};
+
+/**
+ * GET /api/reportes/funnel
+ * Funnel de conversión intereses → visitas → contratos
+ */
+export const getFunnelController = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const funnel = await getFunnelConversion(fecha_inicio, fecha_fin);
+    res.json({ periodo: { fecha_inicio, fecha_fin }, funnel });
+  } catch (error) {
+    console.error("❌ Error obteniendo funnel:", error);
+    res.status(500).json({ message: "Error al obtener funnel de conversión", error: error.message });
+  }
+};
+
+/**
+ * GET /api/reportes/clientes/nuevos
+ * Clientes nuevos registrados en rango
+ */
+export const getClientesNuevosController = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const clientes = await getClientesNuevos(fecha_inicio, fecha_fin);
+    res.json({ periodo: { fecha_inicio, fecha_fin }, ...clientes });
+  } catch (error) {
+    console.error("❌ Error obteniendo clientes nuevos:", error);
+    res.status(500).json({ message: "Error al obtener clientes nuevos", error: error.message });
+  }
+};
+
+/**
+ * GET /api/reportes/ventas/tiempo-ciclo
+ * Tiempo promedio de ciclo de venta
+ */
+export const getTiempoCicloController = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const ciclo = await getTiempoPromedioCiclo(fecha_inicio, fecha_fin);
+    res.json({ periodo: { fecha_inicio, fecha_fin }, ...ciclo });
+  } catch (error) {
+    console.error("❌ Error obteniendo tiempo de ciclo:", error);
+    res.status(500).json({ message: "Error al obtener tiempo de ciclo", error: error.message });
+  }
+};
+
+/**
+ * GET /api/reportes/propiedades/sin-actividad
+ * Propiedades sin actividad reciente
+ */
+export const getPropiedadesSinActividadController = async (req, res) => {
+  try {
+    const dias = parseInt(req.query.dias) || 30;
+    const propiedades = await getPropiedadesSinActividad(dias);
+    res.json({ dias_sin_actividad: dias, propiedades });
+  } catch (error) {
+    console.error("❌ Error obteniendo propiedades sin actividad:", error);
+    res.status(500).json({ message: "Error al obtener propiedades sin actividad", error: error.message });
+  }
+};
 

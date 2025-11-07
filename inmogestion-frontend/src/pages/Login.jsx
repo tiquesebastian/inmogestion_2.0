@@ -46,10 +46,12 @@ export default function Login() {
     // Guardamos sesión
     login(userData);
 
-    // Redirigimos según rol
-    if (rol === "Administrador") navigate("/admin");
-    else if (rol === "Agente") navigate("/agente");
-    else navigate("/");
+    // Redirigimos según rol después de un pequeño delay para que el contexto se actualice
+    setTimeout(() => {
+      if (rol === "Administrador") navigate("/admin/propiedades");
+      else if (rol === "Agente") navigate("/agente/propiedades");
+      else navigate("/");
+    }, 100);
   };
 
   return (

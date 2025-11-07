@@ -1,21 +1,35 @@
-import { Router } from "express";
+import express from "express";
 import {
   getContratos,
+  getContratoById,
   getContratosByCliente,
   getContratosByPropiedad,
   createContrato,
   updateContrato,
-  deleteContrato
+  deleteContrato,
+  actualizarEstadoContrato
 } from "../controllers/contrato.controller.js";
 
-const router = Router();
+const router = express.Router();
 
-// Endpoints principales
+// Listado y detalle
 router.get("/", getContratos);
-router.get("/cliente/:id_cliente", getContratosByCliente);
-router.get("/propiedad/:id_propiedad", getContratosByPropiedad);
+
+// Crear y actualizar completo
 router.post("/", createContrato);
 router.put("/:id", updateContrato);
+
+// Actualizar solo estado
+router.patch("/:id/estado", actualizarEstadoContrato);
+
+// Eliminar
 router.delete("/:id", deleteContrato);
+
+// Filtros
+router.get("/cliente/:id_cliente", getContratosByCliente);
+router.get("/propiedad/:id_propiedad", getContratosByPropiedad);
+
+// Detalle por ID (después de filtros para evitar conflictos de enrutado)
+router.get("/:id", getContratoById);
 
 export default router;

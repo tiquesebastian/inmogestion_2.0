@@ -1,266 +1,233 @@
--- Estructura de la base de datos para InmoGestión
+-- PROYECTO INMOGESTIÓN - SCRIPT MAESTRO
+-- Base de Datos + Datos Iniciales + Verificación
+-- ==========================================================
 
--- Crear base de datos si no existe
-CREATE DATABASE IF NOT EXISTS inmogestion;
+-- 1. CREAR BASE DE DATOS
+DROP DATABASE IF EXISTS inmogestion;
+CREATE DATABASE inmogestion;
 USE inmogestion;
 
--- Tabla de roles
-CREATE TABLE IF NOT EXISTS roles (
+-- ==========================================================
+-- 2. TABLAS PRINCIPALES
+-- ==========================================================
+
+-- ROLES
+CREATE TABLE rol (
     id_rol INT PRIMARY KEY AUTO_INCREMENT,
-    nombre VARCHAR(50) NOT NULL,
-    descripcion TEXT
+    nombre_rol ENUM('Administrador', 'Agente') NOT NULL
 );
 
--- Tabla de usuarios con campos mejorados para gestión de acceso
-CREATE TABLE IF NOT EXISTS usuario (
+-- USUARIOS
+CREATE TABLE usuario (
     id_usuario INT PRIMARY KEY AUTO_INCREMENT,
-    nombre VARCHAR(100) NOT NULL,
-    apellido VARCHAR(100) NOT NULL,
+    nombre VARCHAR(50) NOT NULL,
+    apellido VARCHAR(50) NOT NULL,
     correo VARCHAR(100) UNIQUE NOT NULL,
-    telefono VARCHAR(20),
+    telefono VARCHAR(20) NOT NULL,
     nombre_usuario VARCHAR(50) UNIQUE NOT NULL,
     contrasena VARCHAR(255) NOT NULL,
-    reset_token VARCHAR(255) NULL,
-    reset_token_expires DATETIME NULL,
-    id_rol INT,
-    estado ENUM('Activo', 'Inactivo', 'Bloqueado') DEFAULT 'Activo',
-    ultima_sesion DATETIME NULL,
-    intentos_fallidos INT DEFAULT 0,
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_rol) REFERENCES roles(id_rol)
+    estado ENUM('Activo', 'Inactivo') DEFAULT 'Activo',
+    id_rol INT NOT NULL,
+    FOREIGN KEY (id_rol) REFERENCES rol(id_rol)
 );
 
--- Índices optimizados para búsquedas frecuentes
-ALTER TABLE usuario ADD INDEX idx_correo_estado (correo, estado);
-ALTER TABLE usuario ADD INDEX idx_nombre_usuario_estado (nombre_usuario, estado);
-ALTER TABLE usuario ADD INDEX idx_ultima_sesion (ultima_sesion);
 
--- Tabla de auditoría para seguimiento de cambios
-CREATE TABLE IF NOT EXISTS auditoria (
+INSERT INTO rol (id_rol, nombre_rol)
+VALUES 
+(1, 'Administrador'),
+(2, 'Agente');
+
+-- LOCALIDADES
+CREATE TABLE localidad (
+    id_localidad INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_localidad VARCHAR(100) NOT NULL
+);
+
+-- BARRIOS
+CREATE TABLE barrio (
+    id_barrio INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_barrio VARCHAR(100) NOT NULL,
+    codigo_postal VARCHAR(10) NOT NULL,
+    id_localidad INT NOT NULL,
+    FOREIGN KEY (id_localidad) REFERENCES localidad(id_localidad)
+);
+
+-- CLIENTES
+CREATE TABLE cliente (
+    id_cliente INT PRIMARY KEY AUTO_INCREMENT,
+    nombre_cliente VARCHAR(50) NOT NULL,
+    apellido_cliente VARCHAR(50) NOT NULL,
+    documento_cliente VARCHAR(20) UNIQUE NOT NULL,
+    correo_cliente VARCHAR(100) UNIQUE NOT NULL,
+    telefono_cliente VARCHAR(20),
+    estado_cliente ENUM('Activo', 'Inactivo') DEFAULT 'Activo'
+);
+ALTER TABLE cliente
+  ADD COLUMN nombre_usuario VARCHAR(50) NULL,
+  ADD COLUMN contrasena VARCHAR(255) NULL,
+  ADD COLUMN reset_token VARCHAR(255) NULL,
+  ADD COLUMN reset_token_expires DATETIME NULL;
+-- Añadir índice para login
+CREATE INDEX idx_cliente_nombre_usuario ON cliente(nombre_usuario);
+-- fecha de registro
+ALTER TABLE cliente ADD COLUMN fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+-- PROPIEDADES
+CREATE TABLE propiedad (
+    id_propiedad INT PRIMARY KEY AUTO_INCREMENT,
+    tipo_propiedad ENUM('Casa', 'Apartamento', 'Lote') NOT NULL,
+    direccion_formato VARCHAR(200) NOT NULL,
+    precio_propiedad DECIMAL(15,2) NOT NULL,
+    area_m2 DECIMAL(10,2) NOT NULL,
+    descripcion TEXT,
+    estado_propiedad ENUM('Disponible', 'Reservada', 'Vendida') DEFAULT 'Disponible',
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fecha_venta DATE NULL,
+    id_barrio INT NOT NULL,
+    id_usuario INT NOT NULL,
+    FOREIGN KEY (id_barrio) REFERENCES barrio(id_barrio),
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
+ALTER TABLE propiedad 
+ADD COLUMN num_habitaciones INT NULL AFTER area_m2,
+ADD COLUMN num_banos INT NULL AFTER num_habitaciones;
+
+
+CREATE TABLE reporte_ventas (
+    id_reporte INT PRIMARY KEY AUTO_INCREMENT,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    total_ventas DECIMAL(15,2),
+    id_usuario INT NOT NULL,
+    estado_reporte ENUM('Activo', 'Inactivo') DEFAULT 'Activo',
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
+
+
+-- 10. Tabla Historial de Estados de Propiedad
+CREATE TABLE historial_estado_propiedad (
+    id_historial INT PRIMARY KEY AUTO_INCREMENT,
+    estado_anterior ENUM('Disponible', 'Reservada', 'Vendida'),
+    estado_nuevo ENUM('Disponible', 'Reservada', 'Vendida'),
+    fecha_cambio DATETIME DEFAULT CURRENT_TIMESTAMP,
+    justificacion TEXT,
+    id_propiedad INT NOT NULL,
+    id_usuario INT NOT NULL,
+    FOREIGN KEY (id_propiedad) REFERENCES propiedad(id_propiedad),
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
+
+
+-- 11. Tabla Interacciones con Clientes (llamadas, visitas, mensajes)
+CREATE TABLE interaccion_cliente (
+    id_interaccion INT PRIMARY KEY AUTO_INCREMENT,
+    id_cliente INT NOT NULL,
+    id_usuario INT NOT NULL,
+    tipo_interaccion ENUM('Llamada', 'Mensaje', 'Visita') NOT NULL,
+    notas TEXT,
+    fecha_interaccion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
+
+
+-- CONTRATOS
+CREATE TABLE contrato (
+    id_contrato INT PRIMARY KEY AUTO_INCREMENT,
+    fecha_contrato DATE NOT NULL,
+    valor_venta DECIMAL(15,2) NOT NULL,
+    fecha_venta DATE NOT NULL,
+    archivo_pdf VARCHAR(255),
+    id_propiedad INT NOT NULL,
+    id_cliente INT NOT NULL,
+    id_usuario INT NOT NULL,
+    estado_contrato ENUM('Activo', 'Anulado', 'Finalizado') DEFAULT 'Activo',
+    FOREIGN KEY (id_propiedad) REFERENCES propiedad(id_propiedad),
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+);
+
+
+CREATE TABLE auditoria (
     id_auditoria INT PRIMARY KEY AUTO_INCREMENT,
     tabla_afectada VARCHAR(50) NOT NULL,
     accion VARCHAR(20) NOT NULL,
     descripcion TEXT,
     usuario_accion VARCHAR(100),
-    ip_origen VARCHAR(45) NULL,
-    fecha_accion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    datos_anteriores JSON NULL,
-    datos_nuevos JSON NULL
+    fecha_accion DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de sesiones para control de acceso
-CREATE TABLE IF NOT EXISTS sesiones (
-    id_sesion INT PRIMARY KEY AUTO_INCREMENT,
-    id_usuario INT NOT NULL,
-    token VARCHAR(255) NOT NULL,
-    fecha_inicio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    fecha_expiracion TIMESTAMP NOT NULL,
-    ip_origen VARCHAR(45) NULL,
-    dispositivo VARCHAR(255) NULL,
-    estado ENUM('Activa', 'Expirada', 'Cerrada') DEFAULT 'Activa',
-    FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
+ALTER TABLE auditoria
+ADD COLUMN fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE auditoria 
+ADD COLUMN tabla VARCHAR(50) AFTER id_auditoria;
+
+
+CREATE TABLE interes_propiedad (
+  id_interes INT PRIMARY KEY AUTO_INCREMENT,
+  id_propiedad INT NOT NULL,
+  id_cliente INT NULL, -- FK a cliente.id_cliente si cliente no autenticado, o a usuario si migras
+  nombre_cliente VARCHAR(150) NULL,
+  correo_cliente VARCHAR(150) NULL,
+  telefono_cliente VARCHAR(50) NULL,
+  mensaje TEXT NULL,
+  preferencias JSON NULL,
+  estado ENUM('Pendiente','Contactado','Agendado','Cancelado') DEFAULT 'Pendiente',
+  id_agente_asignado INT NULL,
+  fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_propiedad) REFERENCES propiedad(id_propiedad),
+  FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+  FOREIGN KEY (id_agente_asignado) REFERENCES usuario(id_usuario)
 );
 
--- Tabla de propiedades con campos mejorados
-CREATE TABLE IF NOT EXISTS propiedad (
-    id_propiedad INT PRIMARY KEY AUTO_INCREMENT,
-    titulo VARCHAR(200) NOT NULL,
-    descripcion TEXT,
-    precio DECIMAL(12,2),
-    direccion TEXT,
-    tipo VARCHAR(50),
-    estado VARCHAR(50),
-    id_agente INT,
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_agente) REFERENCES usuario(id_usuario)
+
+CREATE TABLE visita (
+  id_visita INT PRIMARY KEY AUTO_INCREMENT,
+  id_propiedad INT NOT NULL,
+  id_cliente INT NOT NULL,
+  id_agente INT NOT NULL,
+  fecha_visita DATETIME NOT NULL,
+  estado ENUM('Pendiente','Confirmada','Realizada','Cancelada') DEFAULT 'Pendiente',
+  notas TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_propiedad) REFERENCES propiedad(id_propiedad),
+  FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+  FOREIGN KEY (id_agente) REFERENCES usuario(id_usuario)
 );
 
--- Tabla de visitas
-CREATE TABLE IF NOT EXISTS visita (
-    id_visita INT PRIMARY KEY AUTO_INCREMENT,
-    id_propiedad INT,
-    id_cliente INT,
-    id_agente INT,
-    fecha_visita DATETIME,
-    estado VARCHAR(50),
-    notas TEXT,
-    FOREIGN KEY (id_propiedad) REFERENCES propiedad(id_propiedad),
-    FOREIGN KEY (id_cliente) REFERENCES usuario(id_usuario),
-    FOREIGN KEY (id_agente) REFERENCES usuario(id_usuario)
+
+CREATE TABLE imagen_propiedad (
+  id_imagen INT PRIMARY KEY AUTO_INCREMENT,
+  id_propiedad INT NOT NULL,
+  url VARCHAR(512) NOT NULL,
+  prioridad INT DEFAULT 0,
+  descripcion VARCHAR(255),
+  fecha_subida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_propiedad) REFERENCES propiedad(id_propiedad)
 );
 
--- Tabla de contratos
-CREATE TABLE IF NOT EXISTS contrato (
-    id_contrato INT PRIMARY KEY AUTO_INCREMENT,
-    id_propiedad INT,
-    id_cliente INT,
-    id_agente INT,
-    tipo_contrato VARCHAR(50),
-    fecha_inicio DATE,
-    fecha_fin DATE,
-    valor DECIMAL(12,2),
-    estado VARCHAR(50),
-    FOREIGN KEY (id_propiedad) REFERENCES propiedad(id_propiedad),
-    FOREIGN KEY (id_cliente) REFERENCES usuario(id_usuario),
-    FOREIGN KEY (id_agente) REFERENCES usuario(id_usuario)
+
+CREATE TABLE notificacion (
+  id_notificacion INT PRIMARY KEY AUTO_INCREMENT,
+  tipo ENUM('EMAIL','WHATSAPP','SMS','PUSH'),
+  canal VARCHAR(50),
+  destinatario VARCHAR(255),
+  asunto VARCHAR(255),
+  contenido TEXT,
+  estado ENUM('Enviado','Error','Pendiente') DEFAULT 'Pendiente',
+  referencia_tipo VARCHAR(50), -- 'interes','visita','contrato', etc.
+  referencia_id INT,
+  fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Triggers para auditoría
-DELIMITER //
 
-CREATE TRIGGER trg_auditoria_acceso_usuario
-AFTER UPDATE ON usuario
-FOR EACH ROW
-BEGIN
-    IF NEW.estado != OLD.estado OR NEW.intentos_fallidos != OLD.intentos_fallidos THEN
-        INSERT INTO auditoria (
-            tabla_afectada, 
-            accion, 
-            descripcion, 
-            usuario_accion,
-            datos_anteriores,
-            datos_nuevos
-        ) VALUES (
-            'usuario', 
-            'CAMBIO_ESTADO',
-            CONCAT('Usuario ID:', OLD.id_usuario, ' modificado'),
-            CURRENT_USER(),
-            JSON_OBJECT(
-                'estado', OLD.estado,
-                'intentos_fallidos', OLD.intentos_fallidos
-            ),
-            JSON_OBJECT(
-                'estado', NEW.estado,
-                'intentos_fallidos', NEW.intentos_fallidos
-            )
-        );
-    END IF;
-END //
-
--- Procedimiento para registro de usuarios
-CREATE PROCEDURE sp_registrar_usuario(
-    IN p_nombre VARCHAR(100),
-    IN p_apellido VARCHAR(100),
-    IN p_correo VARCHAR(100),
-    IN p_telefono VARCHAR(20),
-    IN p_nombre_usuario VARCHAR(50),
-    IN p_contrasena VARCHAR(255),
-    IN p_id_rol INT
-)
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Error al registrar usuario';
-    END;
-
-    START TRANSACTION;
-        INSERT INTO usuario (
-            nombre, 
-            apellido, 
-            correo, 
-            telefono, 
-            nombre_usuario, 
-            contrasena, 
-            estado, 
-            id_rol
-        ) VALUES (
-            p_nombre,
-            p_apellido,
-            p_correo,
-            p_telefono,
-            p_nombre_usuario,
-            p_contrasena,
-            'Activo',
-            p_id_rol
-        );
-
-        INSERT INTO auditoria (
-            tabla_afectada,
-            accion,
-            descripcion,
-            usuario_accion
-        ) VALUES (
-            'usuario',
-            'REGISTRO',
-            CONCAT('Nuevo usuario registrado: ', p_nombre_usuario),
-            CURRENT_USER()
-        );
-    COMMIT;
-END //
-
--- Procedimiento para inicio de sesión
-CREATE PROCEDURE sp_iniciar_sesion(
-    IN p_nombre_usuario VARCHAR(50),
-    IN p_ip VARCHAR(45),
-    IN p_dispositivo VARCHAR(255)
-)
-BEGIN
-    DECLARE v_id_usuario INT;
-    DECLARE v_estado VARCHAR(20);
-    
-    SELECT id_usuario, estado 
-    INTO v_id_usuario, v_estado
-    FROM usuario 
-    WHERE nombre_usuario = p_nombre_usuario;
-    
-    IF v_estado = 'Activo' THEN
-        UPDATE usuario 
-        SET ultima_sesion = NOW(), 
-            intentos_fallidos = 0 
-        WHERE id_usuario = v_id_usuario;
-        
-        INSERT INTO sesiones (
-            id_usuario, 
-            token, 
-            fecha_expiracion, 
-            ip_origen, 
-            dispositivo
-        ) VALUES (
-            v_id_usuario, 
-            UUID(), 
-            DATE_ADD(NOW(), INTERVAL 24 HOUR), 
-            p_ip, 
-            p_dispositivo
-        );
-    END IF;
-END //
-
-DELIMITER ;
-
--- Vistas para gestión
-CREATE OR REPLACE VIEW vista_usuarios_activos AS
-SELECT 
-    u.id_usuario,
-    u.nombre,
-    u.apellido,
-    u.correo,
-    u.telefono,
-    u.nombre_usuario,
-    u.estado,
-    r.nombre as rol,
-    u.ultima_sesion,
-    u.fecha_registro,
-    COALESCE(s.sesiones_activas, 0) as sesiones_activas
-FROM usuario u
-JOIN roles r ON u.id_rol = r.id_rol
-LEFT JOIN (
-    SELECT id_usuario, COUNT(*) as sesiones_activas 
-    FROM sesiones 
-    WHERE estado = 'Activa' 
-    GROUP BY id_usuario
-) s ON u.id_usuario = s.id_usuario
-WHERE u.estado = 'Activo';
-
--- Insertar roles básicos
-INSERT INTO roles (nombre, descripcion) VALUES
-('Administrador', 'Control total del sistema'),
-('Agente', 'Gestión de propiedades y clientes'),
-('Cliente', 'Usuario final interesado en propiedades');
-
--- Insertar usuario administrador por defecto
--- Contraseña: admin123 (debe ser hasheada en producción)
-INSERT INTO usuario (nombre, apellido, correo, nombre_usuario, contrasena, id_rol) VALUES
-('Admin', 'Sistema', 'admin@inmogestion.com', 'admin', '$2a$10$xkUFJB.x5V6y8X0P5H5H5O5H5H5O5H5H5O5H5H5', 1);
+CREATE TABLE busqueda (
+  id_busqueda INT PRIMARY KEY AUTO_INCREMENT,
+  query_text VARCHAR(500),
+  filtros JSON,
+  id_usuario INT NULL,
+  fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
