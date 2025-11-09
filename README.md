@@ -264,6 +264,22 @@ VITE_EMAIL_PUBLIC_KEY=tu_public_key
 
 ---
 
+
+DB_PORT=3306
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=Azb0251593*
+DB_NAME=inmogestion
+
+# Configuración de Email (Gmail)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_SECURE=false
+EMAIL_USER=tiquesebastian53@gmail.com
+EMAIL_PASS=zpvifywa sktbwmkl
+EMAIL_FROM=InmoGestion <tiquesebastian53@gmail.com>
+
+
 ## 💻 Uso
 
 ### Acceso al Sistema
