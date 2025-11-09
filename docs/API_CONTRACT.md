@@ -1,3 +1,62 @@
+# API Contract (Visitas y Clientes)
+
+Este documento define los endpoints mínimos para el flujo de Visitas y Clientes utilizados por el frontend. Los endpoints están pensados para un backend Express simple de desarrollo.
+
+Base URL por defecto: `http://localhost:4000`
+
+## Clientes
+
+GET /clientes
+- Respuesta: 200 OK
+```
+[
+  { "id_cliente": 32, "nombre_cliente": "Juan Sebastian", "correo_cliente": "juan@example.com" },
+  { "id_cliente": 15, "nombre_cliente": "María García", "correo_cliente": "maria@example.com" },
+  { "id_cliente": 20, "nombre_cliente": "Carlos Pérez", "correo_cliente": "carlos@example.com" }
+]
+```
+
+## Visitas
+
+Estructura de una visita:
+```
+{
+  "id_visita": 1731049200000,
+  "id_propiedad": 101,
+  "id_cliente": 32,
+  "id_agente": 9,
+  "fecha_visita": "2025-11-08",
+  "hora_visita": "10:30",
+  "notas": "Traer documentos",
+  "estado_visita": "Programada" | "Cancelada" | "Confirmada"
+}
+```
+
+GET /api/visitas
+- Query opcional: `id_cliente=<number>`
+- Respuesta: 200 OK `[...visitas]`
+
+POST /visitas
+- Body JSON requerido: `{ id_propiedad, id_cliente, fecha_visita }`
+- Campos opcionales: `id_agente, hora_visita, notas`
+- Respuesta: 201 Created con la visita creada
+
+PUT /api/visitas/:id
+- Actualiza: `fecha_visita`, `notas`, `estado` (campo `estado_visita` en frontend se mapea a `estado` en DB)
+- Respuesta: 200 OK visita actualizada
+
+PATCH /api/visitas/:id/cancelar
+- Cambia `estado` a `Cancelada`
+- Respuesta: 200 OK visita actualizada
+
+Codigos de error comunes
+- 400 Bad Request: campos obligatorios faltantes
+- 404 Not Found: recurso inexistente
+
+## Notas de Integración Frontend
+- `src/services/api.js` usa prefijo `/api`. Si el backend responde 404 en algunos endpoints, se activa fallback en `localStorage` para mantener la funcionalidad.
+- Al tener ahora rutas reales para visitas y clientes, el flujo de agendamiento y reagendamiento funciona contra la base de datos.
+
 # API Contract - InmoGestión
 
 Este documento describe los endpoints mínimos a implementar para el Área Pública (cliente), Agentes y Administrador, con ejemplos de request/response y notas de autorización.

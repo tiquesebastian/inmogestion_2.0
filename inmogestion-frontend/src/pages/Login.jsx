@@ -1,12 +1,14 @@
 // src/pages/Login.jsx
 import { useState, useContext, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
+  const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [tipoLogin, setTipoLogin] = useState("cliente"); // "cliente" o "usuario"
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -14,44 +16,71 @@ export default function Login() {
   const { user } = useContext(AuthContext);
   useEffect(() => {
     if (user) {
-      if (user.rol === "Administrador") navigate("/admin");
-      else if (user.rol === "Agente") navigate("/agente");
+      if (user.rol === 1 || user.rol === "Administrador") navigate("/admin/propiedades");
+      else if (user.rol === 2 || user.rol === "Agente") navigate("/agente/propiedades");
+      else if (user.rol === "cliente") navigate("/cliente/dashboard");
       else navigate("/");
     }
   }, [user, navigate]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    if (!email) {
-      setError("Ingresa un correo");
+    if (!usuario || !password) {
+      setError("Completa todos los campos");
+      setLoading(false);
       return;
     }
 
-    // Simulación simple de autenticación local.
-    // Asumo: correo que contiene 'admin' => Administrador, 'agente' => Agente, si no => Usuario.
-    const lower = email.toLowerCase();
-    let rol = "Usuario";
-    if (lower.includes("admin")) rol = "Administrador";
-    else if (lower.includes("agente")) rol = "Agente";
+    try {
+      const endpoint = tipoLogin === "cliente" 
+        ? "http://localhost:4000/api/auth/login-cliente"
+        : "http://localhost:4000/api/auth/login";
+      
+      const body = tipoLogin === "cliente"
+        ? { usuario, contrasena: password }
+        : { correo: usuario, contrasena: password };
 
-    const userData = {
-      id: Date.now(),
-      nombre: email.split("@")[0],
-      email,
-      rol,
-    };
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-    // Guardamos sesión
-    login(userData);
+      const data = await res.json();
 
-    // Redirigimos según rol después de un pequeño delay para que el contexto se actualice
-    setTimeout(() => {
-      if (rol === "Administrador") navigate("/admin/propiedades");
-      else if (rol === "Agente") navigate("/agente/propiedades");
-      else navigate("/");
-    }, 100);
+      if (!res.ok) {
+        throw new Error(data.message || "Error en el login");
+      }
+
+      // Guardar token y datos de usuario
+      const userData = {
+        ...data.usuario,
+        token: data.token,
+        rol: tipoLogin === "cliente" ? "cliente" : data.usuario.rol,
+      };
+
+      login(userData);
+
+      // Redirigir según rol
+      setTimeout(() => {
+        if (tipoLogin === "cliente") {
+          navigate("/cliente/dashboard");
+        } else if (data.usuario.rol === 1) {
+          navigate("/admin/propiedades");
+        } else if (data.usuario.rol === 2) {
+          navigate("/agente/propiedades");
+        } else {
+          navigate("/");
+        }
+      }, 100);
+    } catch (err) {
+      setError(err.message || "Credenciales inválidas");
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -59,13 +88,15 @@ export default function Login() {
       <form onSubmit={handleSubmit} className="bg-white p-12 rounded-lg shadow-xl w-full max-w-xl">
         <h1 className="text-3xl font-extrabold mb-8 text-center text-blue-900">Iniciar Sesión</h1>
 
-        {error && <div className="mb-4 text-red-600">{error}</div>}
+        {error && <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">{error}</div>}
+
+        {/* Solo login de cliente, sin selector */}
 
         <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          type="email"
-          placeholder="Correo electrónico"
+          value={usuario}
+          onChange={(e) => setUsuario(e.target.value)}
+          type="text"
+          placeholder={tipoLogin === "cliente" ? "Usuario o correo electrónico" : "Correo electrónico"}
           className="w-full text-lg p-4 border border-gray-300 rounded mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
@@ -74,12 +105,31 @@ export default function Login() {
           onChange={(e) => setPassword(e.target.value)}
           type="password"
           placeholder="Contraseña"
-          className="w-full text-lg p-4 border border-gray-300 rounded mb-8 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full text-lg p-4 border border-gray-300 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
-        <button type="submit" className="w-full bg-blue-600 text-white text-lg font-semibold py-4 rounded hover:bg-blue-700 transition">
-          Entrar
+        <div className="mb-6 text-right">
+          <Link 
+            to={tipoLogin === "cliente" ? "/forgot-password-cliente" : "/forgot-password"} 
+            className="text-blue-600 hover:underline text-sm"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
+
+        <button 
+          type="submit" 
+          disabled={loading}
+          className="w-full bg-blue-600 text-white text-lg font-semibold py-4 rounded hover:bg-blue-700 transition disabled:bg-gray-400"
+        >
+          {loading ? "Entrando..." : "Entrar"}
         </button>
+
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            ¿No tienes cuenta? <Link to="/registro-cliente" className="text-blue-600 hover:underline font-semibold">Regístrate aquí</Link>
+          </p>
+        </div>
       </form>
     </div>
   );

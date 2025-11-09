@@ -23,6 +23,22 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
   /**
+   * Cargar usuario de localStorage al montar el componente
+   * Esto permite persistir la sesión al recargar la página
+   */
+  useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        console.error("Error al cargar usuario desde localStorage:", e);
+        localStorage.removeItem("user");
+      }
+    }
+  }, []);
+
+  /**
    * Función para iniciar sesión
    * Guarda el usuario en el estado y en localStorage para persistencia
    * 

@@ -11,6 +11,7 @@ export default function Navbar() {
     { path: "/", label: "Inicio" },
     { path: "/propiedades", label: "Propiedades" },
     { path: "/contacto", label: "Contacto" },
+    { path: "/inmogestion", label: "InmoGestión" },
   ];
 
   return (

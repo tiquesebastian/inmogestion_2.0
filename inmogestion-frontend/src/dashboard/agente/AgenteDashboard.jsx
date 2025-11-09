@@ -3,10 +3,11 @@ import { Link, Routes, Route, useNavigate, Navigate, useLocation } from "react-r
 import PropiedadesAgente from "./PropiedadesAgente";
 import PerfilAgente from "./PerfilAgente";
 import RegistrarPropiedad from "./RegistrarPropiedad";
+import GenerarContrato from "./GenerarContrato";
 import AuthContext from "../../context/AuthContext";
 
 export default function AgenteDashboard() {
-  const { logout } = useContext(AuthContext);
+  const { logout, user } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -22,6 +23,7 @@ export default function AgenteDashboard() {
       'propiedades': 'Mis Propiedades',
       'perfil': 'Mi Perfil',
       'registrar-propiedad': 'Registrar Propiedad',
+      'generar-contrato': 'Generar Contrato',
     };
     return labels[path] || 'Mis Propiedades';
   };
@@ -29,9 +31,14 @@ export default function AgenteDashboard() {
   return (
     <div className="flex h-screen w-full bg-gray-100">
       <aside className="bg-blue-900 text-white p-6 h-full w-64 flex flex-col fixed left-0 top-0 shadow-lg">
-        <div className="flex items-center gap-3 mb-8">
-          <img src="/logo.png" alt="Logo" className="h-12 w-auto" />
-          <h2 className="text-xl font-bold">Panel Agente</h2>
+        <div className="flex flex-col gap-4 mb-8">
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="Logo" className="h-12 w-auto" />
+            <h2 className="text-xl font-bold">Panel Agente</h2>
+          </div>
+          <div className="bg-yellow-100 text-yellow-900 rounded-md px-3 py-2 text-sm font-medium shadow-inner">
+            Bienvenido, <span className="font-bold">{user?.nombre || user?.username || 'Agente'}</span>
+          </div>
         </div>
         <nav className="space-y-2 flex-grow">
           <Link to="/agente/propiedades" className={`block px-4 py-2 rounded transition ${location.pathname.includes('propiedades') && !location.pathname.includes('registrar-propiedad') ? 'bg-yellow-500 text-blue-900 font-semibold' : 'hover:bg-blue-800'}`}>
@@ -39,6 +46,9 @@ export default function AgenteDashboard() {
           </Link>
           <Link to="/agente/registrar-propiedad" className={`block px-4 py-2 rounded transition ${location.pathname.includes('registrar-propiedad') ? 'bg-yellow-500 text-blue-900 font-semibold' : 'hover:bg-blue-800'}`}>
             Registrar Propiedad
+          </Link>
+          <Link to="/agente/generar-contrato" className={`block px-4 py-2 rounded transition ${location.pathname.includes('generar-contrato') ? 'bg-yellow-500 text-blue-900 font-semibold' : 'hover:bg-blue-800'}`}>
+            Generar Contrato
           </Link>
           <Link to="/agente/perfil" className={`block px-4 py-2 rounded transition ${location.pathname.includes('perfil') ? 'bg-yellow-500 text-blue-900 font-semibold' : 'hover:bg-blue-800'}`}>
             Mi Perfil
@@ -69,6 +79,7 @@ export default function AgenteDashboard() {
           <Route index element={<Navigate to="propiedades" replace />} />
           <Route path="propiedades" element={<PropiedadesAgente key="propiedades" />} />
           <Route path="registrar-propiedad" element={<RegistrarPropiedad key="registrar-propiedad" />} />
+          <Route path="generar-contrato" element={<GenerarContrato key="generar-contrato" />} />
           <Route path="perfil" element={<PerfilAgente key="perfil" />} />
         </Routes>
       </main>

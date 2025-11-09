@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { getImagenesByPropiedad } from '../services/api';
+import React, { useEffect, useState, useContext } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { getImagenesByPropiedad, getFavoritos, addFavorito, removeFavorito } from '../services/api';
+import AuthContext from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { getClienteIdFromToken } from '../utils/jwt';
 
 /**
  * Componente FilteredProperties
@@ -11,11 +14,21 @@ const FilteredProperties = () => {
   // Obtener parámetros de la URL
   const [searchParams] = useSearchParams();
   
+  // Navegación programática para hacer la tarjeta completa clickeable
+  const navigate = useNavigate();
+
+  // Contexto de autenticación y toasts
+  const { user } = useContext(AuthContext);
+  const toast = useToast();
+  
   // Estado para almacenar la lista de propiedades obtenidas del backend
   const [properties, setProperties] = useState([]);
   
   // Estado para las imágenes de las propiedades
   const [imagenes, setImagenes] = useState({});
+  
+  // Estado para favoritos del cliente actual
+  const [favoritos, setFavoritos] = useState(new Set());
   
   // Estado para los filtros de búsqueda - inicializar con params de URL
   const [filters, setFilters] = useState({ 
@@ -85,10 +98,9 @@ const FilteredProperties = () => {
       props.map(async (prop) => {
         try {
           const imgs = await getImagenesByPropiedad(prop.id_propiedad);
-          // Ordenar por prioridad (mayor prioridad primero) y tomar la primera
+          // La API ahora retorna una lista de URLs normalizadas; toma la primera disponible
           if (imgs && imgs.length > 0) {
-            const sortedImgs = imgs.sort((a, b) => (b.prioridad || 0) - (a.prioridad || 0));
-            imagenesMap[prop.id_propiedad] = sortedImgs[0].url;
+            imagenesMap[prop.id_propiedad] = imgs[0];
           }
         } catch (error) {
           console.warn(`Error al cargar imagen para propiedad ${prop.id_propiedad}:`, error);
@@ -102,8 +114,69 @@ const FilteredProperties = () => {
   // Ejecutar fetchProperties al montar el componente
   useEffect(() => {
     fetchProperties();
+    loadFavoritos();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * Cargar favoritos del cliente actual
+   */
+  const loadFavoritos = async () => {
+    if (!user || user.rol !== 'cliente') return;
+    
+    try {
+      let clienteId = user.id_cliente || user.id || user.id_usuario;
+      if (!clienteId && user.token) {
+        clienteId = getClienteIdFromToken(user.token);
+      }
+      if (!clienteId) return;
+      
+      const favs = await getFavoritos(clienteId);
+      const favIds = new Set(favs.map(f => f.id_propiedad || f));
+      setFavoritos(favIds);
+    } catch (e) {
+      console.warn('Error cargando favoritos:', e);
+    }
+  };
+
+  /**
+   * Toggle favorito
+   */
+  const toggleFavorito = async (e, idPropiedad) => {
+    e.stopPropagation(); // Evitar navegación de la tarjeta
+    
+    if (!user || user.rol !== 'cliente') {
+      toast.info('Inicia sesión como cliente para guardar favoritos');
+      return;
+    }
+    
+    let clienteId = user.id_cliente || user.id || user.id_usuario;
+    if (!clienteId && user.token) {
+      clienteId = getClienteIdFromToken(user.token);
+    }
+    if (!clienteId) {
+      toast.error('No se pudo identificar al cliente');
+      return;
+    }
+    
+    try {
+      if (favoritos.has(idPropiedad)) {
+        await removeFavorito({ id_propiedad: idPropiedad, id_cliente: clienteId });
+        setFavoritos(prev => {
+          const next = new Set(prev);
+          next.delete(idPropiedad);
+          return next;
+        });
+        toast.success('Eliminado de favoritos');
+      } else {
+        await addFavorito({ id_propiedad: idPropiedad, id_cliente: clienteId });
+        setFavoritos(prev => new Set(prev).add(idPropiedad));
+        toast.success('Agregado a favoritos');
+      }
+    } catch (e) {
+      toast.error('Error al actualizar favoritos');
+    }
+  };
 
   /**
    * Maneja cambios en los campos del formulario de filtros
@@ -264,14 +337,38 @@ const FilteredProperties = () => {
             const precio = typeof prop.precio_propiedad === 'number'
               ? prop.precio_propiedad.toLocaleString('es-CO')
               : prop.precio_propiedad;
+            const esFavorito = favoritos.has(prop.id_propiedad);
+            
             return (
               <article
                 key={prop.id_propiedad}
-                className="bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-2xl hover:border-blue-200 transition-all duration-300 overflow-hidden group transform hover:-translate-y-1"
+                className="relative bg-white rounded-xl shadow-md border border-gray-100 hover:shadow-2xl hover:border-blue-200 transition-all duration-300 overflow-hidden group transform hover:-translate-y-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onClick={() => navigate(`/propiedades/${prop.id_propiedad}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(`/propiedades/${prop.id_propiedad}`);
+                  }
+                }}
+                tabIndex={0}
+                role="link"
               >
+                {/* Botón de favorito (esquina superior derecha) */}
+                {user && user.rol === 'cliente' && (
+                  <button
+                    onClick={(e) => toggleFavorito(e, prop.id_propiedad)}
+                    className="absolute top-3 right-3 z-10 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all duration-200 hover:scale-110"
+                    aria-label={esFavorito ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                  >
+                    <svg className={`w-6 h-6 ${esFavorito ? 'text-red-500 fill-current' : 'text-gray-400'}`} fill={esFavorito ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </button>
+                )}
+                
                 {/* Imagen de la propiedad o placeholder */}
                 {imagenes[prop.id_propiedad] ? (
-                  <div className="h-48 overflow-hidden">
+                  <div className="h-48 overflow-hidden relative">
                     <img 
                       src={imagenes[prop.id_propiedad]} 
                       alt={`${prop.tipo_propiedad} en ${prop.direccion_formato}`}
@@ -287,12 +384,33 @@ const FilteredProperties = () => {
                         <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                       </svg>
                     </div>
+                    {/* Overlay CTA */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/35 transition-colors duration-300 flex items-end">
+                      <div className="w-full p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="inline-flex items-center gap-1 text-white text-sm font-semibold bg-blue-600/90 hover:bg-blue-700/90 rounded-md px-3 py-1 shadow">
+                          Ver detalles
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  <div className="h-48 bg-gradient-to-br from-blue-100 via-blue-50 to-purple-50 flex items-center justify-center group-hover:from-blue-200 group-hover:to-purple-100 transition-all duration-300">
+                  <div className="h-48 bg-gradient-to-br from-blue-100 via-blue-50 to-purple-50 flex items-center justify-center group-hover:from-blue-200 group-hover:to-purple-100 transition-all duration-300 relative">
                     <svg className="w-16 h-16 text-blue-300 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                     </svg>
+                    <div className="absolute inset-0 flex items-end">
+                      <div className="w-full p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="inline-flex items-center gap-1 text-white text-sm font-semibold bg-blue-600/90 hover:bg-blue-700/90 rounded-md px-3 py-1 shadow">
+                          Ver detalles
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -345,15 +463,18 @@ const FilteredProperties = () => {
                     </li>
                   </ul>
 
-                  <Link
-                    to={`/propiedades/${prop.id_propiedad}`}
-                    className="inline-flex w-full justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg px-4 py-2.5 text-sm transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
-                  >
-                    Ver detalles
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
+                  <div className="mt-auto">
+                    <Link
+                      to={`/propiedades/${prop.id_propiedad}`}
+                      className="inline-flex w-full justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg px-4 py-2.5 text-sm transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Ver detalles
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
                 </div>
               </article>
             );

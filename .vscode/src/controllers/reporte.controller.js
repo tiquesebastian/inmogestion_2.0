@@ -1,4 +1,5 @@
 import db from "../config/db.js";
+import { cacheGet, cacheSet } from "../utils/cache.js";
 import {
   getResumenVentas,
   getVentasPorAgente,
@@ -330,8 +331,17 @@ export const getVentasRealizadas = async (req, res) => {
 export const getDashboard = async (req, res) => {
   try {
     const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const key = `dashboard|${fecha_inicio}|${fecha_fin}`;
+    const forceRefresh = req.query.refresh === '1' || req.query.refresh === 1;
+    if (!forceRefresh) {
+      const cached = cacheGet(key);
+      if (cached) {
+        return res.json({ ...cached.data, meta: { cache: true, generated_at: new Date(cached.createdAt).toISOString(), ttl_ms: cached.expires - Date.now() } });
+      }
+    }
     const dashboard = await getDashboardCompleto(fecha_inicio, fecha_fin);
-    res.json(dashboard);
+    cacheSet(key, dashboard, 60000); // TTL 60s
+    res.json({ ...dashboard, meta: { cache: false } });
   } catch (error) {
     console.error("❌ Error obteniendo dashboard:", error);
     res.status(500).json({ message: "Error al obtener dashboard", error: error.message });
@@ -345,8 +355,14 @@ export const getDashboard = async (req, res) => {
 export const getResumenVentasController = async (req, res) => {
   try {
     const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const key = `ventas_resumen|${fecha_inicio}|${fecha_fin}`;
+    const cached = cacheGet(key);
+    if (cached) {
+      return res.json({ periodo: { fecha_inicio, fecha_fin }, ...cached.data, meta: { cache: true } });
+    }
     const resumen = await getResumenVentas(fecha_inicio, fecha_fin);
-    res.json({ periodo: { fecha_inicio, fecha_fin }, ...resumen });
+    cacheSet(key, resumen, 60000);
+    res.json({ periodo: { fecha_inicio, fecha_fin }, ...resumen, meta: { cache: false } });
   } catch (error) {
     console.error("❌ Error obteniendo resumen de ventas:", error);
     res.status(500).json({ message: "Error al obtener resumen de ventas", error: error.message });
@@ -360,8 +376,14 @@ export const getResumenVentasController = async (req, res) => {
 export const getVentasPorAgenteController = async (req, res) => {
   try {
     const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const key = `ventas_agentes|${fecha_inicio}|${fecha_fin}`;
+    const cached = cacheGet(key);
+    if (cached) {
+      return res.json({ periodo: { fecha_inicio, fecha_fin }, agentes: cached.data, meta: { cache: true } });
+    }
     const agentes = await getVentasPorAgente(fecha_inicio, fecha_fin);
-    res.json({ periodo: { fecha_inicio, fecha_fin }, agentes });
+    cacheSet(key, agentes, 60000);
+    res.json({ periodo: { fecha_inicio, fecha_fin }, agentes, meta: { cache: false } });
   } catch (error) {
     console.error("❌ Error obteniendo ventas por agente:", error);
     res.status(500).json({ message: "Error al obtener ventas por agente", error: error.message });
@@ -375,8 +397,14 @@ export const getVentasPorAgenteController = async (req, res) => {
 export const getVentasPorLocalidadController = async (req, res) => {
   try {
     const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const key = `ventas_localidades|${fecha_inicio}|${fecha_fin}`;
+    const cached = cacheGet(key);
+    if (cached) {
+      return res.json({ periodo: { fecha_inicio, fecha_fin }, localidades: cached.data, meta: { cache: true } });
+    }
     const localidades = await getVentasPorLocalidad(fecha_inicio, fecha_fin);
-    res.json({ periodo: { fecha_inicio, fecha_fin }, localidades });
+    cacheSet(key, localidades, 120000); // TTL 120s para agregación más pesada
+    res.json({ periodo: { fecha_inicio, fecha_fin }, localidades, meta: { cache: false } });
   } catch (error) {
     console.error("❌ Error obteniendo ventas por localidad:", error);
     res.status(500).json({ message: "Error al obtener ventas por localidad", error: error.message });
@@ -389,8 +417,14 @@ export const getVentasPorLocalidadController = async (req, res) => {
  */
 export const getPropiedadesPorEstadoController = async (req, res) => {
   try {
+    const key = `propiedades_estado`;
+    const cached = cacheGet(key);
+    if (cached) {
+      return res.json({ estados: cached.data, meta: { cache: true } });
+    }
     const estados = await getPropiedadesPorEstado();
-    res.json({ estados });
+    cacheSet(key, estados, 300000); // TTL 5 min, poco cambiante
+    res.json({ estados, meta: { cache: false } });
   } catch (error) {
     console.error("❌ Error obteniendo propiedades por estado:", error);
     res.status(500).json({ message: "Error al obtener propiedades por estado", error: error.message });
@@ -405,8 +439,14 @@ export const getTopPropiedadesInteresesController = async (req, res) => {
   try {
     const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
     const limit = parseInt(req.query.limit) || 10;
+    const key = `top_intereses|${fecha_inicio}|${fecha_fin}|${limit}`;
+    const cached = cacheGet(key);
+    if (cached) {
+      return res.json({ periodo: { fecha_inicio, fecha_fin }, propiedades: cached.data, meta: { cache: true } });
+    }
     const propiedades = await getTopPropiedadesIntereses(fecha_inicio, fecha_fin, limit);
-    res.json({ periodo: { fecha_inicio, fecha_fin }, propiedades });
+    cacheSet(key, propiedades, 60000);
+    res.json({ periodo: { fecha_inicio, fecha_fin }, propiedades, meta: { cache: false } });
   } catch (error) {
     console.error("❌ Error obteniendo top propiedades:", error);
     res.status(500).json({ message: "Error al obtener top propiedades", error: error.message });
@@ -420,8 +460,14 @@ export const getTopPropiedadesInteresesController = async (req, res) => {
 export const getFunnelController = async (req, res) => {
   try {
     const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const key = `funnel|${fecha_inicio}|${fecha_fin}`;
+    const cached = cacheGet(key);
+    if (cached) {
+      return res.json({ periodo: { fecha_inicio, fecha_fin }, funnel: cached.data, meta: { cache: true } });
+    }
     const funnel = await getFunnelConversion(fecha_inicio, fecha_fin);
-    res.json({ periodo: { fecha_inicio, fecha_fin }, funnel });
+    cacheSet(key, funnel, 60000);
+    res.json({ periodo: { fecha_inicio, fecha_fin }, funnel, meta: { cache: false } });
   } catch (error) {
     console.error("❌ Error obteniendo funnel:", error);
     res.status(500).json({ message: "Error al obtener funnel de conversión", error: error.message });
@@ -435,8 +481,14 @@ export const getFunnelController = async (req, res) => {
 export const getClientesNuevosController = async (req, res) => {
   try {
     const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const key = `clientes_nuevos|${fecha_inicio}|${fecha_fin}`;
+    const cached = cacheGet(key);
+    if (cached) {
+      return res.json({ periodo: { fecha_inicio, fecha_fin }, ...cached.data, meta: { cache: true } });
+    }
     const clientes = await getClientesNuevos(fecha_inicio, fecha_fin);
-    res.json({ periodo: { fecha_inicio, fecha_fin }, ...clientes });
+    cacheSet(key, clientes, 60000);
+    res.json({ periodo: { fecha_inicio, fecha_fin }, ...clientes, meta: { cache: false } });
   } catch (error) {
     console.error("❌ Error obteniendo clientes nuevos:", error);
     res.status(500).json({ message: "Error al obtener clientes nuevos", error: error.message });
@@ -450,8 +502,14 @@ export const getClientesNuevosController = async (req, res) => {
 export const getTiempoCicloController = async (req, res) => {
   try {
     const { fecha_inicio, fecha_fin } = obtenerRangoFechas(req);
+    const key = `tiempo_ciclo|${fecha_inicio}|${fecha_fin}`;
+    const cached = cacheGet(key);
+    if (cached) {
+      return res.json({ periodo: { fecha_inicio, fecha_fin }, ...cached.data, meta: { cache: true } });
+    }
     const ciclo = await getTiempoPromedioCiclo(fecha_inicio, fecha_fin);
-    res.json({ periodo: { fecha_inicio, fecha_fin }, ...ciclo });
+    cacheSet(key, ciclo, 120000);
+    res.json({ periodo: { fecha_inicio, fecha_fin }, ...ciclo, meta: { cache: false } });
   } catch (error) {
     console.error("❌ Error obteniendo tiempo de ciclo:", error);
     res.status(500).json({ message: "Error al obtener tiempo de ciclo", error: error.message });

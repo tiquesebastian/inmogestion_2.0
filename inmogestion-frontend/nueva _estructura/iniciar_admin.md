@@ -12,7 +12,7 @@ Contraseña: admin123
 O si prefieres crear un nuevo administrador:
 
 Ve a la página de registro
-Usa la clave maestra "ADMIN2023!"
+Usa la clave maestra "Admin2023!"
 Rellena los datos del nuevo administrador
 Inicia sesión con las credenciales que hayas creado
 Una vez que inicies sesión como administrador, serás redirigido al panel de administración donde podrás:

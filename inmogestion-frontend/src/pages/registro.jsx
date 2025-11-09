@@ -18,6 +18,9 @@ export default function Registro() {
     estado: "Activo"
   });
   
+  const [confirmarContrasena, setConfirmarContrasena] = useState("");
+  const [aceptarTerminos, setAceptarTerminos] = useState(false);
+  
   const [error, setError] = useState("");
 
   // 👉 Paso 2: Función para manejar cambios en los inputs
@@ -35,6 +38,18 @@ export default function Registro() {
   const handleSubmit = async (e) => {
   e.preventDefault();
   setError("");
+
+  // Validar que las contraseñas coincidan
+  if (formData.contrasena !== confirmarContrasena) {
+    setError("Las contraseñas no coinciden");
+    return;
+  }
+
+  // Validar que aceptó los términos
+  if (!aceptarTerminos) {
+    setError("Debes aceptar los términos y condiciones");
+    return;
+  }
 
   // Validar clave maestra (esto deberías cambiarlo por tu clave real)
   const CLAVE_MAESTRA = "Admin2023!"; // Ejemplo - cámbiala por tu clave segura
@@ -115,8 +130,11 @@ export default function Registro() {
         nombre_usuario: "",
         contrasena: "",
         id_rol: "3",
+        clave_maestra: "",
         estado: "Activo"
       });
+      setConfirmarContrasena("");
+      setAceptarTerminos(false);
 
     } else {
       alert("❌ Error: " + (data.message || "No se pudo registrar"));
@@ -195,6 +213,26 @@ export default function Registro() {
 
         <input
           type="password"
+          name="confirmar_contrasena"
+          placeholder="Confirmar contraseña"
+          value={confirmarContrasena}
+          onChange={(e) => setConfirmarContrasena(e.target.value)}
+          className={`w-full p-2 border rounded-lg ${
+            confirmarContrasena && formData.contrasena !== confirmarContrasena
+              ? 'border-red-500'
+              : ''
+          }`}
+          required
+        />
+        {confirmarContrasena && formData.contrasena !== confirmarContrasena && (
+          <p className="text-red-600 text-sm">Las contraseñas no coinciden</p>
+        )}
+        {confirmarContrasena && formData.contrasena === confirmarContrasena && (
+          <p className="text-green-600 text-sm">✓ Las contraseñas coinciden</p>
+        )}
+
+        <input
+          type="password"
           name="clave_maestra"
           placeholder="Clave maestra (requerida para registro de administrador)"
           value={formData.clave_maestra}
@@ -202,6 +240,29 @@ export default function Registro() {
           className="w-full p-2 border rounded-lg"
           required
         />
+
+        <div className="mb-4">
+          <label className="flex items-start gap-2">
+            <input 
+              type="checkbox" 
+              checked={aceptarTerminos} 
+              onChange={(e) => setAceptarTerminos(e.target.checked)}
+              required
+              className="mt-1"
+            />
+            <span className="text-sm text-gray-700">
+              Acepto los{' '}
+              <a 
+                href="/terminos-condiciones" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Términos y Condiciones
+              </a>
+            </span>
+          </label>
+        </div>
 
         {error && (
           <div className="text-red-600 text-sm mb-4">

@@ -12,10 +12,17 @@ import historialRoutes from "./routes/historial.routes.js";
 import interaccionRoutes from "./routes/interaccion.routes.js";
 import visitaRoutes from "./routes/visita.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import authClienteRoutes from "./routes/authCliente.routes.js";
 import usuarioRoutes from "./routes/usuario.routes.js";
 import imagenRoutes from "./routes/imagen.routes.js";
 import localidadRoutes from "./routes/localidad.routes.js";
 import barrioRoutes from "./routes/barrio.routes.js";
+import contratoDocumentoRoutes from "./routes/contratoDocumento.routes.js";
+import documentoClienteRoutes from "./routes/documentoCliente.routes.js";
+import passwordRecoveryRoutes from "./routes/passwordRecovery.routes.js";
+
+// Servicios
+import { iniciarTareaRecordatorios } from "./services/recordatorios.service.js";
 
 // Middlewares para seguridad y autorización
 import { verificarToken, verificarRol } from "./middleware/auth.middleware.js";
@@ -64,6 +71,9 @@ app.use("/api/barrios", barrioRoutes);
 // Rutas de contratos
 app.use("/api/contratos", contratoRoutes);
 
+// Rutas de contratos documentos (generación de PDFs)
+app.use("/api/contratos-documentos", contratoDocumentoRoutes);
+
 // Rutas de reportes
 app.use("/api/reportes", reporteRoutes);
 
@@ -76,11 +86,19 @@ app.use("/api/interacciones", interaccionRoutes);
 // Rutas de visitas (agendar, listar por agente)
 app.use("/api/visitas", visitaRoutes);
 
+// Rutas de documentos de clientes (carga masiva)
+app.use("/api/documentos-clientes", documentoClienteRoutes);
+
 // Rutas públicas (sin autenticación)
 // Aquí va el login, registro y otras rutas abiertas
 app.use("/api/auth", authRoutes);
+app.use("/api/auth", authClienteRoutes);
+app.use("/api/password-recovery", passwordRecoveryRoutes);
 
 // Iniciar el servidor en el puerto configurado
 app.listen(PORT, () => {
   console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
+  
+  // Iniciar tareas programadas
+  iniciarTareaRecordatorios();
 });

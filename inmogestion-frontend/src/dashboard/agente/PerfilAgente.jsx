@@ -34,10 +34,7 @@ export default function PerfilAgente() {
             <label className="text-sm font-medium block mb-1">Teléfono</label>
             <input name="telefono" value={form.telefono} onChange={handleChange} className="border rounded w-full px-3 py-2" />
           </div>
-          <div>
-            <label className="text-sm font-medium block mb-1">Correo</label>
-            <input disabled value={user?.email || ''} className="border rounded w-full px-3 py-2 bg-gray-50" />
-          </div>
+          {/* Campo de correo removido a solicitud: el correo no se edita desde aquí */}
           <button disabled={saving} className="bg-blue-600 text-white rounded px-4 py-2 disabled:opacity-50">
             {saving ? 'Guardando...' : 'Guardar cambios'}
           </button>

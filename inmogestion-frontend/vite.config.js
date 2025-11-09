@@ -22,6 +22,12 @@ export default defineConfig({
           });
         },
       },
+      // Proxy para archivos estáticos servidos por el backend (/uploads/...)
+      '/uploads': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });

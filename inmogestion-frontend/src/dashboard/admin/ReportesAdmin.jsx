@@ -7,6 +7,8 @@ export default function ReportesAdmin() {
   const [data, setData] = useState(null);
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
+  const [lastUpdated, setLastUpdated] = useState('');
+  const [fromCache, setFromCache] = useState(false);
 
   // Inicializar con últimos 30 días
   useEffect(() => {
@@ -18,14 +20,17 @@ export default function ReportesAdmin() {
     setFechaInicio(hace30Dias.toISOString().split('T')[0]);
   }, []);
 
-  const cargarDatos = async () => {
+  // Permite forzar recálculo (ignorar caché) con refresh=true
+  const cargarDatos = async (forceRefresh = false) => {
     if (!fechaInicio || !fechaFin) return;
-    
     setLoading(true);
     setError('');
     try {
-      const dashboard = await getDashboard(fechaInicio, fechaFin);
+      const dashboard = await getDashboard(fechaInicio, fechaFin, forceRefresh);
       setData(dashboard);
+      const generatedAt = dashboard?.meta?.generated_at || new Date().toISOString();
+      setLastUpdated(generatedAt);
+      setFromCache(Boolean(dashboard?.meta?.cache));
     } catch (e) {
       setError(e.message || 'Error cargando reportes');
     } finally {
@@ -51,11 +56,39 @@ export default function ReportesAdmin() {
     return new Intl.NumberFormat('es-CO').format(value);
   };
 
+  const timeAgo = (iso) => {
+    if (!iso) return '';
+    const now = Date.now();
+    const ts = new Date(iso).getTime();
+    const diff = Math.max(0, Math.floor((now - ts) / 1000));
+    if (diff < 60) return `${diff}s`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+    return `${Math.floor(diff / 86400)}d`;
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+  <div className="flex justify-between items-center gap-4 flex-wrap">
         <h2 className="text-3xl font-bold text-gray-800">Dashboard de Reportes</h2>
-        
+        {/* Indicador de caché / última actualización */}
+        {lastUpdated && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className={`px-2 py-1 rounded-full border ${fromCache ? 'bg-yellow-50 border-yellow-200 text-yellow-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
+              {fromCache ? 'En caché' : 'Actualizado'}
+            </span>
+            <span className="text-gray-500">hace {timeAgo(lastUpdated)}</span>
+            <button
+              className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 border border-blue-200 transition"
+              title="Actualizar ahora (ignorar caché)"
+              onClick={() => cargarDatos(true)}
+              disabled={loading}
+            >
+              Actualizar ahora
+            </button>
+          </div>
+        )}
+
         {/* Filtros de fecha */}
         <div className="flex gap-3 items-center">
           <input
@@ -124,29 +157,44 @@ export default function ReportesAdmin() {
             />
           </div>
 
-          {/* Funnel de Conversión */}
+          {/* Funnel de Conversión (rediseñado) */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-xl font-bold mb-4 text-gray-800">🎯 Funnel de Conversión</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <FunnelStage
+            <h3 className="text-xl font-bold mb-5 text-gray-800 flex items-center gap-2">
+              🎯 Funnel de Conversión
+              <span className="text-xs font-medium px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                Periodo activo
+              </span>
+            </h3>
+            <div className="space-y-4">
+              <FunnelRow
                 label="Intereses"
                 value={data.funnel_conversion?.intereses || 0}
-                color="bg-blue-500"
-                width="100%"
+                color="blue"
+                base
               />
-              <FunnelStage
+              <FunnelRow
                 label="Visitas"
                 value={data.funnel_conversion?.visitas || 0}
-                color="bg-yellow-500"
-                width={`${data.funnel_conversion?.tasa_interes_visita || 0}%`}
-                tasa={`${data.funnel_conversion?.tasa_interes_visita}%`}
+                color="yellow"
+                porcentaje={safeRate(data.funnel_conversion?.intereses, data.funnel_conversion?.visitas)}
               />
-              <FunnelStage
+              <FunnelRow
                 label="Contratos"
                 value={data.funnel_conversion?.contratos || 0}
-                color="bg-green-500"
-                width={`${data.funnel_conversion?.tasa_interes_contrato || 0}%`}
-                tasa={`${data.funnel_conversion?.tasa_interes_contrato}%`}
+                color="green"
+                porcentaje={safeRate(data.funnel_conversion?.visitas, data.funnel_conversion?.contratos)}
+              />
+            </div>
+            <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <InfoBadge
+                label="Visitas / Intereses"
+                value={formatPercent(safeRate(data.funnel_conversion?.intereses, data.funnel_conversion?.visitas))}
+                color="yellow"
+              />
+              <InfoBadge
+                label="Contratos / Visitas"
+                value={formatPercent(safeRate(data.funnel_conversion?.visitas, data.funnel_conversion?.contratos))}
+                color="green"
               />
             </div>
           </div>
@@ -219,35 +267,43 @@ export default function ReportesAdmin() {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {data.top_propiedades_intereses?.map((prop) => (
-                    <tr key={prop.id_propiedad} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <p className="font-semibold text-sm">{prop.tipo_propiedad}</p>
-                        <p className="text-xs text-gray-500">{prop.direccion_formato}</p>
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <p>{prop.nombre_localidad}</p>
-                        <p className="text-xs text-gray-500">{prop.nombre_barrio}</p>
-                      </td>
-                      <td className="px-4 py-3 text-sm font-semibold">{formatCurrency(prop.precio_propiedad)}</td>
-                      <td className="px-4 py-3">
-                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
-                          {prop.total_intereses} ({prop.clientes_unicos} únicos)
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          prop.estado_propiedad === 'Disponible' ? 'bg-green-100 text-green-800' :
-                          prop.estado_propiedad === 'Reservada' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {prop.estado_propiedad}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {Array.isArray(data.top_propiedades_intereses) && data.top_propiedades_intereses.length > 0 ? (
+                      data.top_propiedades_intereses.map((prop) => (
+                        <tr key={prop.id_propiedad} className="hover:bg-gray-50">
+                          <td className="px-4 py-3">
+                            <p className="font-semibold text-sm">{prop.tipo_propiedad}</p>
+                            <p className="text-xs text-gray-500">{prop.direccion_formato}</p>
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <p>{prop.nombre_localidad}</p>
+                            <p className="text-xs text-gray-500">{prop.nombre_barrio}</p>
+                          </td>
+                          <td className="px-4 py-3 text-sm font-semibold">{formatCurrency(prop.precio_propiedad)}</td>
+                          <td className="px-4 py-3">
+                            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
+                              {prop.total_intereses} ({prop.clientes_unicos} únicos)
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                              prop.estado_propiedad === 'Disponible' ? 'bg-green-100 text-green-800' :
+                              prop.estado_propiedad === 'Reservada' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {prop.estado_propiedad}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="px-4 py-6 text-center text-gray-500">
+                          No hay propiedades con interés en este periodo
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
               </table>
             </div>
           </div>
@@ -281,16 +337,55 @@ function KPI({ label, value, subtitle, color, icon }) {
   );
 }
 
-function FunnelStage({ label, value, color, width, tasa }) {
+function safeRate(base, result) {
+  const b = Number(base) || 0;
+  const r = Number(result) || 0;
+  if (b <= 0) return 0;
+  const pct = (r / b) * 100;
+  return Math.min(Math.max(pct, 0), 100); // clamp 0-100
+}
+
+function formatPercent(val) {
+  return `${val.toFixed(1)}%`;
+}
+
+function FunnelRow({ label, value, porcentaje, color, base }) {
+  const colors = {
+    blue: 'bg-blue-500',
+    yellow: 'bg-yellow-500',
+    green: 'bg-green-500'
+  };
   return (
-    <div className="text-center">
-      <div className="mb-2">
-        <div className={`${color} text-white font-bold py-3 px-4 rounded-lg`} style={{ width }}>
-          <p className="text-sm opacity-90">{label}</p>
-          <p className="text-2xl">{value}</p>
-        </div>
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm font-medium text-gray-600">{label}</span>
+        <span className="text-sm font-semibold text-gray-800">{value}</span>
       </div>
-      {tasa && <p className="text-sm text-gray-600 font-semibold">Conversión: {tasa}</p>}
+      <div className="h-6 w-full bg-gray-100 rounded overflow-hidden relative">
+        {base ? (
+          <div className={`${colors[color]} h-full w-full flex items-center px-2 text-white text-xs font-semibold`}>Base</div>
+        ) : (
+          <div className={`${colors[color]} h-full transition-all duration-500`} style={{ width: `${porcentaje}%` }}>
+            <div className="h-full flex items-center px-2 text-white text-xs font-semibold">
+              {formatPercent(porcentaje)}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InfoBadge({ label, value, color }) {
+  const colors = {
+    yellow: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+    green: 'bg-green-50 text-green-700 border-green-200',
+    blue: 'bg-blue-50 text-blue-700 border-blue-200'
+  };
+  return (
+    <div className={`rounded-lg border px-4 py-3 flex items-center justify-between ${colors[color]}`}> 
+      <span className="text-xs font-medium">{label}</span>
+      <span className="text-sm font-bold">{value}</span>
     </div>
   );
 }

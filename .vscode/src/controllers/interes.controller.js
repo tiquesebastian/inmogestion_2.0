@@ -1,5 +1,6 @@
 import { createInteres, getInteresesByPropiedad } from "../models/interes.model.js";
 import db from "../config/db.js";
+import { enviarEmailNuevoInteres } from '../services/email.service.js';
 
 export const registrarInteres = async (req, res) => {
   try {
@@ -22,6 +23,38 @@ export const registrarInteres = async (req, res) => {
       mensaje,
       preferencias,
     });
+
+    // Obtener datos de la propiedad y agente para el email
+    const [propiedadData] = await db.query(`
+      SELECT 
+        p.direccion_formato, 
+        p.tipo_propiedad, 
+        p.precio_propiedad,
+        u.nombre as agente_nombre,
+        u.correo as agente_email
+      FROM propiedad p
+      LEFT JOIN usuario u ON p.id_usuario = u.id_usuario
+      WHERE p.id_propiedad = ?
+    `, [id_propiedad]);
+
+    // Enviar email al agente (asíncrono)
+    if (propiedadData.length > 0 && propiedadData[0].agente_email) {
+      const emailData = {
+        agente_nombre: propiedadData[0].agente_nombre,
+        agente_email: propiedadData[0].agente_email,
+        cliente_nombre: nombre_cliente,
+        cliente_email: correo_cliente,
+        cliente_telefono: telefono_cliente,
+        propiedad_direccion: propiedadData[0].direccion_formato,
+        propiedad_tipo: propiedadData[0].tipo_propiedad,
+        propiedad_precio: propiedadData[0].precio_propiedad,
+        comentarios: mensaje
+      };
+
+      enviarEmailNuevoInteres(emailData)
+        .then(() => console.log('📧 Email de interés enviado al agente'))
+        .catch(err => console.error('❌ Error al enviar email:', err));
+    }
 
     // Responder
     res.status(201).json({ ok: true, id_interes: insertId });
