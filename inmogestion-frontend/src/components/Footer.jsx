@@ -3,7 +3,6 @@
  * Pie de página de la aplicación con enlaces legales y de navegación
  * Incluye copyright, política de privacidad y vínculo al inicio
  */
-import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {

@@ -389,50 +389,33 @@ export async function getInteracciones(id_cliente) {
   }
 }
 
-// ==== Favoritos ==== 
+// ==== Favoritos (solo localStorage por ahora, sin llamadas a backend) ==== 
 /**
- * Añadir una propiedad a favoritos de un cliente
+ * Añadir una propiedad a favoritos de un cliente (localStorage)
  */
 export async function addFavorito({ id_propiedad, id_cliente }) {
-  try {
-    return await apiFetch(`/favoritos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id_propiedad, id_cliente })
-    });
-  } catch (e) {
-    console.warn('addFavorito fallback (localStorage):', e.message);
-    const key = `fav_${id_cliente}`;
-    const current = JSON.parse(localStorage.getItem(key) || '[]');
-    if (!current.includes(id_propiedad)) current.push(id_propiedad);
-    localStorage.setItem(key, JSON.stringify(current));
-    return { ok: true, id_propiedad, id_cliente, _local: true };
-  }
+  const key = `fav_${id_cliente}`;
+  const current = JSON.parse(localStorage.getItem(key) || '[]');
+  if (!current.includes(id_propiedad)) current.push(id_propiedad);
+  localStorage.setItem(key, JSON.stringify(current));
+  return { ok: true, id_propiedad, id_cliente, _local: true };
 }
 
 /**
- * Eliminar favorito
+ * Eliminar favorito (localStorage)
  */
 export async function removeFavorito({ id_propiedad, id_cliente }) {
-  try {
-    // Intentar endpoint REST DELETE /favoritos/:id_propiedad?id_cliente=... (convención)
-    return await apiFetch(`/favoritos/${id_propiedad}?id_cliente=${id_cliente}`, { method: 'DELETE' });
-  } catch (e) {
-    console.warn('removeFavorito fallback (localStorage):', e.message);
-    const key = `fav_${id_cliente}`;
-    const current = JSON.parse(localStorage.getItem(key) || '[]');
-    const next = current.filter(id => id !== id_propiedad);
-    localStorage.setItem(key, JSON.stringify(next));
-    return { ok: true, removed: id_propiedad, _local: true };
-  }
+  const key = `fav_${id_cliente}`;
+  const current = JSON.parse(localStorage.getItem(key) || '[]');
+  const next = current.filter(id => id !== id_propiedad);
+  localStorage.setItem(key, JSON.stringify(next));
+  return { ok: true, removed: id_propiedad, _local: true };
 }
 
 /**
- * Obtener favoritos del cliente
+ * Obtener favoritos del cliente (localStorage)
  */
 export async function getFavoritos(id_cliente) {
-  // Modo temporal: no llamar backend para evitar 404 hasta que exista endpoint real.
-  // Solo usa localStorage.
   const key = `fav_${id_cliente}`;
   try {
     const current = JSON.parse(localStorage.getItem(key) || '[]');

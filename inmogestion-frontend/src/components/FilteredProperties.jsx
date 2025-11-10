@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getImagenesByPropiedad, getFavoritos, addFavorito, removeFavorito } from '../services/api';
 import AuthContext from '../context/AuthContext';

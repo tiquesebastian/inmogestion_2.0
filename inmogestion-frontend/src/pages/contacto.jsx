@@ -1,4 +1,3 @@
-import React from 'react';
 import marcaAgua from "../assets/logo.png";
 
 export default function Contacto() {

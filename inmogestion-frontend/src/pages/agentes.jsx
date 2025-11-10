@@ -1,5 +1,4 @@
 // ./pages/agentes.jsx
-import React from "react";
 
 // Datos de ejemplo de los agentes
 const agentes = [

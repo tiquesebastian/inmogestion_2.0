@@ -9,11 +9,6 @@ export const createVisita = async (data) => {
   return result.insertId;
 };
 
-export const getVisitasByAgente = async (id_agente) => {
-  const [rows] = await db.query("SELECT * FROM visita WHERE id_agente = ? ORDER BY fecha_visita DESC", [id_agente]);
-  return rows;
-};
-
 // Obtener todas las visitas (ordenadas por fecha descendente)
 export const getVisitas = async () => {
   const [rows] = await db.query("SELECT id_visita, id_propiedad, id_cliente, id_agente, fecha_visita, hora_visita, notas, estado AS estado_visita FROM visita ORDER BY fecha_visita DESC");

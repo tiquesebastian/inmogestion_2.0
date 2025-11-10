@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 /**
  * Componente ClientRegistration
@@ -21,6 +21,8 @@ const ClientRegistration = ({ onSuccess }) => {
   
   const [confirmarContrasena, setConfirmarContrasena] = useState('');
   const [aceptarTerminos, setAceptarTerminos] = useState(false);
+  const [mostrarContrasena, setMostrarContrasena] = useState(false);
+  const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
   
   // Estado para controlar el indicador de carga
   const [loading, setLoading] = useState(false);
@@ -28,13 +30,82 @@ const ClientRegistration = ({ onSuccess }) => {
   // Estado para mensajes de error y éxito
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [erroresValidacion, setErroresValidacion] = useState({});
+
+  // Validación de contraseña fuerte
+  const validarContrasena = (password) => {
+    const errores = [];
+    if (password.length < 8) errores.push("Mínimo 8 caracteres");
+    if (!/[A-Z]/.test(password)) errores.push("Al menos una mayúscula");
+    if (!/[a-z]/.test(password)) errores.push("Al menos una minúscula");
+    if (!/[0-9]/.test(password)) errores.push("Al menos un número");
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) errores.push("Al menos un carácter especial");
+    return errores;
+  };
+
+  // Validación de email
+  const validarEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  // Validación de teléfono colombiano
+  const validarTelefono = (telefono) => {
+    const regex = /^[3][0-9]{9}$/;
+    return regex.test(telefono);
+  };
+
+  // Validación de documento (cédula colombiana)
+  const validarDocumento = (doc) => {
+    const regex = /^[0-9]{6,10}$/;
+    return regex.test(doc);
+  };
 
   /**
    * Actualiza el estado del formulario cuando cambian los campos
    * @param {Event} e - Evento del input
    */
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+
+    // Validar en tiempo real
+    const nuevosErrores = { ...erroresValidacion };
+    
+    if (name === "correo_cliente" && value) {
+      if (!validarEmail(value)) {
+        nuevosErrores.correo_cliente = "Email inválido";
+      } else {
+        delete nuevosErrores.correo_cliente;
+      }
+    }
+
+    if (name === "telefono_cliente" && value) {
+      if (!validarTelefono(value)) {
+        nuevosErrores.telefono_cliente = "Formato: 3XXXXXXXXX (10 dígitos)";
+      } else {
+        delete nuevosErrores.telefono_cliente;
+      }
+    }
+
+    if (name === "documento_cliente" && value) {
+      if (!validarDocumento(value)) {
+        nuevosErrores.documento_cliente = "Documento inválido (6-10 dígitos)";
+      } else {
+        delete nuevosErrores.documento_cliente;
+      }
+    }
+
+    if (name === "contrasena" && value) {
+      const erroresPass = validarContrasena(value);
+      if (erroresPass.length > 0) {
+        nuevosErrores.contrasena = erroresPass;
+      } else {
+        delete nuevosErrores.contrasena;
+      }
+    }
+
+    setErroresValidacion(nuevosErrores);
   };
 
   /**
@@ -46,6 +117,32 @@ const ClientRegistration = ({ onSuccess }) => {
     setLoading(true);
     setError('');
     setSuccess('');
+    
+    // Validaciones finales
+    if (!validarEmail(form.correo_cliente)) {
+      setError('Por favor ingresa un email válido');
+      setLoading(false);
+      return;
+    }
+
+    if (form.telefono_cliente && !validarTelefono(form.telefono_cliente)) {
+      setError('El teléfono debe tener formato: 3XXXXXXXXX (10 dígitos)');
+      setLoading(false);
+      return;
+    }
+
+    if (!validarDocumento(form.documento_cliente)) {
+      setError('El documento debe tener entre 6 y 10 dígitos');
+      setLoading(false);
+      return;
+    }
+
+    const erroresPass = validarContrasena(form.contrasena);
+    if (erroresPass.length > 0) {
+      setError('La contraseña no cumple los requisitos: ' + erroresPass.join(', '));
+      setLoading(false);
+      return;
+    }
     
     // Validar que las contraseñas coincidan
     if (form.contrasena !== confirmarContrasena) {
@@ -96,117 +193,213 @@ const ClientRegistration = ({ onSuccess }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md">
-      <h3 className="text-2xl font-bold mb-4 text-gray-800">Registro de Cliente</h3>
-      
-      <div className="mb-4">
-        <input 
-          name="nombre_cliente" 
-          placeholder="Nombre" 
-          value={form.nombre_cliente} 
-          onChange={handleChange} 
-          required 
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+    <form onSubmit={handleSubmit} className="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl space-y-4">
+      <div className="text-center mb-6">
+        <h3 className="text-2xl sm:text-3xl font-bold text-gray-800">Registro de Cliente</h3>
+        <p className="text-sm text-gray-600 mt-2">Completa tus datos para crear tu cuenta</p>
       </div>
       
-      <div className="mb-4">
-        <input 
-          name="apellido_cliente" 
-          placeholder="Apellido" 
-          value={form.apellido_cliente} 
-          onChange={handleChange} 
-          required 
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      {/* Grid de 2 columnas en pantallas medianas y grandes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Nombre *
+          </label>
+          <input 
+            name="nombre_cliente" 
+            type="text"
+            placeholder="Tu nombre" 
+            value={form.nombre_cliente} 
+            onChange={handleChange} 
+            required 
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Apellido *
+          </label>
+          <input 
+            name="apellido_cliente" 
+            type="text"
+            placeholder="Tu apellido" 
+            value={form.apellido_cliente} 
+            onChange={handleChange} 
+            required 
+            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          />
+        </div>
       </div>
       
-      <div className="mb-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Correo electrónico *
+        </label>
         <input 
           name="correo_cliente" 
           type="email" 
-          placeholder="Correo electrónico" 
+          placeholder="tu@email.com" 
           value={form.correo_cliente} 
           onChange={handleChange} 
           required 
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full p-3 border rounded-lg focus:ring-2 transition ${
+            erroresValidacion.correo_cliente
+              ? 'border-red-500 focus:ring-red-500'
+              : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+          }`}
         />
+        {erroresValidacion.correo_cliente && (
+          <p className="text-red-600 text-xs mt-1">❌ {erroresValidacion.correo_cliente}</p>
+        )}
       </div>
       
-      <div className="mb-4">
-        <input 
-          name="telefono_cliente" 
-          placeholder="Teléfono" 
-          value={form.telefono_cliente} 
-          onChange={handleChange} 
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Teléfono
+          </label>
+          <input 
+            name="telefono_cliente" 
+            type="tel"
+            placeholder="3001234567" 
+            value={form.telefono_cliente} 
+            onChange={handleChange}
+            maxLength="10"
+            className={`w-full p-3 border rounded-lg focus:ring-2 transition ${
+              erroresValidacion.telefono_cliente
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+            }`}
+          />
+          {erroresValidacion.telefono_cliente && (
+            <p className="text-red-600 text-xs mt-1">❌ {erroresValidacion.telefono_cliente}</p>
+          )}
+          <p className="text-gray-500 text-xs mt-1">Formato: 3XXXXXXXXX</p>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Documento *
+          </label>
+          <input 
+            name="documento_cliente" 
+            type="text"
+            placeholder="1234567890" 
+            value={form.documento_cliente} 
+            onChange={handleChange} 
+            required
+            maxLength="10"
+            className={`w-full p-3 border rounded-lg focus:ring-2 transition ${
+              erroresValidacion.documento_cliente
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+            }`}
+          />
+          {erroresValidacion.documento_cliente && (
+            <p className="text-red-600 text-xs mt-1">❌ {erroresValidacion.documento_cliente}</p>
+          )}
+          <p className="text-gray-500 text-xs mt-1">Cédula de ciudadanía</p>
+        </div>
       </div>
       
-      <div className="mb-4">
-        <input 
-          name="documento_cliente" 
-          placeholder="Documento de identidad" 
-          value={form.documento_cliente} 
-          onChange={handleChange} 
-          required 
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-      
-      <div className="mb-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Nombre de usuario *
+        </label>
         <input 
           name="nombre_usuario" 
-          placeholder="Nombre de usuario" 
+          type="text"
+          placeholder="usuario123" 
           value={form.nombre_usuario} 
           onChange={handleChange} 
           required 
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
         />
       </div>
       
-      <div className="mb-4">
-        <input 
-          name="contrasena" 
-          type="password" 
-          placeholder="Contraseña" 
-          value={form.contrasena} 
-          onChange={handleChange} 
-          required 
-          className="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Contraseña *
+        </label>
+        <div className="relative">
+          <input 
+            name="contrasena" 
+            type={mostrarContrasena ? "text" : "password"}
+            placeholder="••••••••" 
+            value={form.contrasena} 
+            onChange={handleChange} 
+            required 
+            className={`w-full p-3 pr-12 border rounded-lg focus:ring-2 transition ${
+              erroresValidacion.contrasena
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+            }`}
+          />
+          <button
+            type="button"
+            onClick={() => setMostrarContrasena(!mostrarContrasena)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+          >
+            {mostrarContrasena ? "🙈" : "👁️"}
+          </button>
+        </div>
+        {erroresValidacion.contrasena && (
+          <ul className="text-red-600 text-xs mt-1 space-y-0.5">
+            {erroresValidacion.contrasena.map((err, i) => (
+              <li key={i}>❌ {err}</li>
+            ))}
+          </ul>
+        )}
+        <p className="text-gray-500 text-xs mt-1">
+          Mínimo 8 caracteres, mayúsculas, minúsculas, números y símbolos
+        </p>
       </div>
       
-      <div className="mb-4">
-        <input 
-          name="confirmar_contrasena" 
-          type="password" 
-          placeholder="Confirmar contraseña" 
-          value={confirmarContrasena} 
-          onChange={(e) => setConfirmarContrasena(e.target.value)} 
-          required 
-          className={`w-full p-3 border rounded focus:outline-none focus:ring-2 ${
-            confirmarContrasena && form.contrasena !== confirmarContrasena
-              ? 'border-red-500 focus:ring-red-500'
-              : 'border-gray-300 focus:ring-blue-500'
-          }`}
-        />
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Confirmar contraseña *
+        </label>
+        <div className="relative">
+          <input 
+            name="confirmar_contrasena" 
+            type={mostrarConfirmar ? "text" : "password"}
+            placeholder="••••••••" 
+            value={confirmarContrasena} 
+            onChange={(e) => setConfirmarContrasena(e.target.value)} 
+            required 
+            className={`w-full p-3 pr-12 border rounded-lg focus:ring-2 transition ${
+              confirmarContrasena && form.contrasena !== confirmarContrasena
+                ? 'border-red-500 focus:ring-red-500'
+                : confirmarContrasena && form.contrasena === confirmarContrasena
+                ? 'border-green-500 focus:ring-green-500'
+                : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+            }`}
+          />
+          <button
+            type="button"
+            onClick={() => setMostrarConfirmar(!mostrarConfirmar)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+          >
+            {mostrarConfirmar ? "🙈" : "👁️"}
+          </button>
+        </div>
         {confirmarContrasena && form.contrasena !== confirmarContrasena && (
-          <p className="text-red-600 text-sm mt-1">Las contraseñas no coinciden</p>
+          <p className="text-red-600 text-xs mt-1">❌ Las contraseñas no coinciden</p>
         )}
         {confirmarContrasena && form.contrasena === confirmarContrasena && (
-          <p className="text-green-600 text-sm mt-1">✓ Las contraseñas coinciden</p>
+          <p className="text-green-600 text-xs mt-1">✅ Las contraseñas coinciden</p>
         )}
       </div>
       
-      <div className="mb-4">
-        <label className="flex items-start gap-2">
+      <div className="bg-blue-50 p-4 rounded-lg">
+        <label className="flex items-start gap-2 cursor-pointer">
           <input 
             type="checkbox" 
             checked={aceptarTerminos} 
             onChange={(e) => setAceptarTerminos(e.target.checked)}
             required
-            className="mt-1"
+            className="mt-1 w-4 h-4"
           />
           <span className="text-sm text-gray-700">
             Acepto los{' '}
@@ -214,24 +407,42 @@ const ClientRegistration = ({ onSuccess }) => {
               href="/terminos-condiciones" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
+              className="text-blue-600 hover:underline font-semibold"
             >
               Términos y Condiciones
+            </a>
+            {' '}y la{' '}
+            <a 
+              href="/politica-privacidad" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline font-semibold"
+            >
+              Política de Privacidad
             </a>
           </span>
         </label>
       </div>
       
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+          <p className="text-red-700 text-sm font-medium">❌ {error}</p>
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+          <p className="text-green-700 text-sm font-medium">✅ {success}</p>
+        </div>
+      )}
+      
       <button 
         type="submit" 
         disabled={loading}
-        className="w-full bg-blue-600 text-white font-semibold py-3 rounded hover:bg-blue-700 transition disabled:bg-gray-400"
+        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:scale-[1.02] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
       >
-        {loading ? 'Registrando...' : 'Registrarse'}
+        {loading ? '⏳ Registrando...' : '✨ Crear mi cuenta'}
       </button>
-      
-      {error && <p className="mt-4 text-red-600 text-center">{error}</p>}
-      {success && <p className="mt-4 text-green-600 text-center">{success}</p>}
     </form>
   );
 };
