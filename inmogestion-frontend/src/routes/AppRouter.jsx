@@ -47,15 +47,22 @@ export default function AppRouter() {
   // Rutas que usan layout completo sin navbar/footer/breadcrumbs
   const isDashboard = location.pathname.startsWith('/admin') || location.pathname.startsWith('/agente') || location.pathname.startsWith('/cliente');
 
+  const isHome = location.pathname === "/";
+
   return (
     <main className="min-h-screen bg-gray-100 text-gray-800 flex flex-col">
       {!isDashboard && <Navbar menuAbierto={menuAbierto} setMenuAbierto={setMenuAbierto} />}
-      
+
       {!isDashboard && (
-        <div className="flex-1 max-w-7xl mx-auto px-6 py-12">
-          <Breadcrumbs />
-          
-          <Routes>
+        <>
+          {/* Breadcrumbs siempre en contenedor */}
+          <div className="max-w-7xl mx-auto px-6 py-6 w-full">
+            <Breadcrumbs />
+          </div>
+
+          {/* Contenido de rutas */}
+          <div className={isHome ? "flex-1 w-full" : "flex-1 max-w-7xl mx-auto px-6 py-6"}>
+            <Routes>
             {/* Rutas públicas */}
             <Route path="/" element={<Inicio />} />
             <Route path="/login" element={<Login />} />
@@ -78,8 +85,9 @@ export default function AppRouter() {
 
             {/* Ruta 404 */}
             <Route path="*" element={<h2 className="text-xl">Página no encontrada</h2>} />
-          </Routes>
-        </div>
+            </Routes>
+          </div>
+        </>
       )}
 
       {isDashboard && (
