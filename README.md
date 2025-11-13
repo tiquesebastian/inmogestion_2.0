@@ -11,6 +11,7 @@ Plataforma completa de gestión inmobiliaria que permite administrar propiedades
 - [Características](#-características-principales)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Tecnologías](#-tecnologías-utilizadas)
+- [PSP - Personal Software Process](#-psp---personal-software-process)
 - [Instalación](#-instalación-rápida)
 - [Configuración](#-configuración)
 - [Uso](#-uso)
@@ -279,6 +280,118 @@ EMAIL_USER=tiquesebastian53@gmail.com
 EMAIL_PASS=zpvifywa sktbwmkl
 EMAIL_FROM=InmoGestion <tiquesebastian53@gmail.com>
 
+
+---
+
+## 📊 PSP - Personal Software Process
+
+Este proyecto implementa el **Personal Software Process (PSP)** para mejorar la calidad del desarrollo mediante métricas y análisis cuantitativo.
+
+### 🎯 Objetivos del PSP en InmoGestión
+
+- ✅ Mejorar precisión de estimaciones de tiempo y esfuerzo
+- ✅ Reducir densidad de defectos en el código
+- ✅ Medir y optimizar productividad personal
+- ✅ Establecer un proceso repetible y medible
+- ✅ Aprender continuamente de datos históricos
+
+### 📈 Métricas del Proyecto
+
+#### Métricas Actuales
+
+| Métrica | Valor Actual | Benchmark PSP | Estado |
+|---------|--------------|---------------|--------|
+| **Productividad** | 39.14 LOC/hora | 35-45 LOC/hr | ✅ BUENO |
+| **Densidad de Defectos** | 11.34 /KLOC | 1-2 /KLOC | ⚠️ A MEJORAR |
+| **Líneas de Código** | 5,910 LOC | - | - |
+| **Tiempo Total** | 151 horas | - | - |
+| **Módulos Completados** | 10 módulos | - | - |
+
+#### Distribución de Tiempo por Fase
+
+```
+Planeación:     8%   ████░░░░░░░░░░░░░░░░
+Diseño:        15%   ███████░░░░░░░░░░░░░
+Codificación:  65%   ████████████████████ (⚠️ Alto)
+Testing:       10%   █████░░░░░░░░░░░░░░░ (⚠️ Bajo)
+Postmortem:     3%   ██░░░░░░░░░░░░░░░░░░
+```
+
+### 📚 Documentación PSP
+
+Toda la documentación del proceso se encuentra en [`docs/PSP/`](docs/PSP/):
+
+#### Actividades Completadas
+
+| # | Actividad | Documento | Descripción |
+|---|-----------|-----------|-------------|
+| 1 | **Diagnóstico Personal** | [`Actividad_1_Diagnostico_Personal_Proceso.md`](docs/PSP/Actividad_1_Diagnostico_Personal_Proceso.md) | Análisis del proceso actual, diagrama de flujo, FODA |
+| 2 | **Método PROBE** | [`Actividad_2_Metodo_PROBE.md`](docs/PSP/Actividad_2_Metodo_PROBE.md) | Estimación de tamaño y esfuerzo con datos históricos |
+| 3 | **Evaluación de Desempeño** | [`Actividad_3_Evaluacion_Desempeno_Personal.md`](docs/PSP/Actividad_3_Evaluacion_Desempeno_Personal.md) | Métricas de productividad, calidad y precisión |
+| 4 | **Herramientas Informáticas** | [`Actividad_4_Herramientas_Informaticas.md`](docs/PSP/Actividad_4_Herramientas_Informaticas.md) | Stack de herramientas (Clockify, GitHub, Sheets) |
+| 5 | **Plan de Mejora (PPIP)** | [`Actividad_5_PPIP_Plan_Mejora.md`](docs/PSP/Actividad_5_PPIP_Plan_Mejora.md) | Lecciones aprendidas y plan de acción |
+
+### 🔧 Herramientas PSP Utilizadas
+
+| Categoría | Herramienta | Propósito |
+|-----------|-------------|-----------|
+| **Time Tracking** | Clockify | Registro preciso de tiempo por tarea |
+| **Defect Tracking** | GitHub Issues | Gestión estructurada de bugs |
+| **Estadísticas** | Google Sheets | Análisis de métricas PSP |
+| **CI/CD** | GitHub Actions | Automatización de tests |
+| **Code Quality** | ESLint + Prettier | Linting y formateo automático |
+| **Version Control** | Git + GitHub | Control de versiones |
+
+### 📊 Datos Históricos (Método PROBE)
+
+Módulos completados con métricas de referencia para estimaciones futuras:
+
+| Módulo | LOC | Tiempo (hrs) | LOC/hora | Defectos |
+|--------|-----|--------------|----------|----------|
+| Autenticación | 630 | 18 | 35.00 | 8 |
+| Gestión Propiedades | 970 | 22 | 44.09 | 12 |
+| Módulo Clientes | 600 | 14 | 42.86 | 5 |
+| Sistema Imágenes | 330 | 10 | 33.00 | 4 |
+| Contratos PDF | 800 | 20 | 40.00 | 9 |
+| Dashboard Admin | 970 | 24 | 40.42 | 11 |
+| Localidades/Barrios | 210 | 6 | 35.00 | 2 |
+| Sistema Visitas | 590 | 16 | 36.88 | 7 |
+| Interacciones Cliente | 460 | 12 | 38.33 | 6 |
+| Recuperación Contraseña | 350 | 9 | 38.89 | 3 |
+
+### 🎯 Metas de Mejora (Próximos 3 meses)
+
+| Métrica | Actual | Meta | Mejora Esperada |
+|---------|--------|------|-----------------|
+| Densidad de Defectos | 11.34 /KLOC | < 5 /KLOC | -56% |
+| Cobertura de Tests | 0% | 80% | +80% |
+| Error de Estimación | 20.7% | < 15% | -28% |
+| Tiempo de Testing | 10% | 20% | +100% |
+
+### 🚀 Próximas Acciones PSP
+
+**Prioridad Alta (Próximas 2 semanas):**
+- [ ] Implementar tests automatizados (Jest + Supertest)
+- [ ] Configurar GitHub Actions para CI/CD
+- [ ] Establecer política de Pull Requests obligatorios
+- [ ] Comenzar time tracking sistemático
+
+**Prioridad Media (Próximo mes):**
+- [ ] Alcanzar 60% de cobertura de tests
+- [ ] Aplicar método PROBE en próximos 3 módulos
+- [ ] Implementar code reviews obligatorios
+- [ ] Retrospectivas quincenales
+
+### 📖 Referencias PSP
+
+- **PSP0:** Proceso personal básico con medición
+- **PSP1:** Proceso con estimación y planificación
+- **PSP2:** Proceso con gestión de calidad
+- **PSP3:** Proceso con prevención de defectos
+
+**Estado actual del proyecto:** PSP1 (Intermedio)
+
+---
 
 ## 💻 Uso
 
