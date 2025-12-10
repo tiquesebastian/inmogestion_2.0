@@ -3,6 +3,11 @@ import { useNavigate, Link } from "react-router-dom";
 import emailjs from "emailjs-com";
 import AuthContext from "../context/AuthContext";
 
+// Cargar identificadores de EmailJS desde variables de entorno (acepta ambos formatos de clave)
+const EMAIL_SERVICE_ID = import.meta.env.VITE_EMAIL_SERVICE_ID || import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const EMAIL_TEMPLATE_ID = import.meta.env.VITE_EMAIL_TEMPLATE_ID || import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const EMAIL_PUBLIC_KEY = import.meta.env.VITE_EMAIL_PUBLIC_KEY || import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
 
 export default function Registro() {
   // Estados para el formulario y validación
@@ -176,24 +181,36 @@ export default function Registro() {
         else navigate("/");
       }
 
-      // 👉 Enviar notificación por correo con EmailJS
-      emailjs
-        .send(
-          "service_xxx",   // tu Service ID de EmailJS
-          "template_xxx",  // tu Template ID de EmailJS
-          {
-            nombre: formData.nombre,
-            correo: formData.correo,
-            usuario: formData.nombre_usuario,
-          },
-          "publicKey_xxx"  // tu Public Key de EmailJS
-        )
-        .then(() => {
-          console.log("📧 Correo enviado correctamente");
-        })
-        .catch((err) => {
-          console.error("❌ Error enviando correo:", err);
-        });
+      // 👉 Enviar notificación por correo con EmailJS sólo si está configurado correctamente
+      const puedeEnviarEmailJS = EMAIL_SERVICE_ID && EMAIL_TEMPLATE_ID && EMAIL_PUBLIC_KEY &&
+        ![EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, EMAIL_PUBLIC_KEY].some(v => /xxx|PUBLIC_KEY/i.test(v));
+
+      if (!puedeEnviarEmailJS) {
+        console.warn("⚠ EmailJS no configurado (variables faltantes o placeholders). Se omite envío de correo.");
+      } else {
+        try {
+          // Inicializar EmailJS si la versión lo requiere
+          if (emailjs.init) {
+            emailjs.init(EMAIL_PUBLIC_KEY);
+          }
+          emailjs.send(
+            EMAIL_SERVICE_ID,
+            EMAIL_TEMPLATE_ID,
+            {
+              nombre: formData.nombre,
+              correo: formData.correo,
+              usuario: formData.nombre_usuario,
+            },
+            EMAIL_PUBLIC_KEY
+          ).then(() => {
+            console.log("📧 Correo enviado correctamente vía EmailJS");
+          }).catch(err => {
+            console.error("❌ Error enviando correo con EmailJS:", err);
+          });
+        } catch (err) {
+          console.error("❌ Fallo inesperado en EmailJS:", err);
+        }
+      }
 
       // limpiar campos
       setFormData({

@@ -160,24 +160,24 @@ export default function ClienteDashboard() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <header className="bg-blue-900 text-white p-6 shadow-lg">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+      <header className="bg-blue-900 text-white p-4 sm:p-6 shadow-lg">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Panel de Cliente</h1>
-            <p className="text-blue-200 mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold">Panel de Cliente</h1>
+            <p className="text-blue-200 mt-1 text-sm sm:text-base">
               Bienvenido, {userData?.nombre_cliente || userData?.nombre || 'Usuario'}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
             <Link
               to="/propiedades"
-              className="bg-white text-blue-900 hover:bg-blue-50 px-4 py-2 rounded font-semibold transition shadow-sm"
+              className="bg-white text-blue-900 hover:bg-blue-50 px-4 py-2 rounded font-semibold transition shadow-sm text-center text-sm sm:text-base"
             >
               Explorar propiedades
             </Link>
             <button
               onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 px-6 py-2 rounded font-semibold transition"
+              className="bg-red-600 hover:bg-red-700 px-4 sm:px-6 py-2 rounded font-semibold transition text-sm sm:text-base"
             >
               Cerrar Sesión
             </button>
@@ -185,7 +185,7 @@ export default function ClienteDashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto p-6">
+      <main className="max-w-7xl mx-auto p-4 sm:p-6">
         {error && (
           <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}
@@ -209,22 +209,22 @@ export default function ClienteDashboard() {
         )}
 
         {/* Información del Cliente */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Mi Información</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Mi Información</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 <span className="font-semibold">Nombre:</span> {userData?.nombre_cliente || userData?.nombre || 'N/D'}
               </p>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 <span className="font-semibold">Correo:</span> {userData?.correo_cliente || userData?.correo || 'N/D'}
               </p>
             </div>
             <div>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 <span className="font-semibold">ID Cliente:</span> {userData?.id_cliente || userData?.id || 'N/D'}
               </p>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 <span className="font-semibold">Usuario:</span> {userData?.nombre_usuario || userData?.usuario || 'N/D'}
               </p>
             </div>
@@ -232,72 +232,74 @@ export default function ClienteDashboard() {
         </div>
 
         {/* Visitas Agendadas */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Mis Visitas Agendadas</h2>
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Mis Visitas Agendadas</h2>
           {visitas.length === 0 ? (
             <div className="text-gray-600">
               <p>No tienes visitas agendadas.</p>
               <Link to="/propiedades" className="inline-block mt-3 text-blue-600 hover:underline font-medium">Explorar propiedades</Link>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-gray-600 font-semibold">Fecha</th>
-                    <th className="px-4 py-3 text-left text-gray-600 font-semibold">Hora</th>
-                    <th className="px-4 py-3 text-left text-gray-600 font-semibold">Propiedad</th>
-                    <th className="px-4 py-3 text-left text-gray-600 font-semibold">Estado</th>
-                    <th className="px-4 py-3 text-left text-gray-600 font-semibold">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {visitas.map((visita) => (
-                    <tr key={visita.id_visita} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        {new Date(visita.fecha_visita).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3">{visita.hora_visita}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col">
-                          <Link to={`/propiedades/${visita.id_propiedad}`} className="text-blue-700 hover:underline font-medium">
-                            {propInfo[visita.id_propiedad]?.titulo || `Propiedad #${visita.id_propiedad}`}
-                          </Link>
-                          {propInfo[visita.id_propiedad]?.direccion && (
-                            <span className="text-xs text-gray-500">{propInfo[visita.id_propiedad].direccion}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`px-3 py-1 rounded-full text-sm ${
-                            visita.estado_visita === "Programada"
-                              ? "bg-blue-100 text-blue-800"
-                              : visita.estado_visita === "Completada"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {visita.estado_visita}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {visita.estado_visita === 'Programada' && (
-                          <div className="flex gap-3">
-                            <button
-                              className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
-                              onClick={() => {
-                                setReprogData({ id_visita: visita.id_visita, fecha: visita.fecha_visita?.slice(0,10), hora: visita.hora_visita || '', notas: visita.notas || '' });
-                                setShowReprogModal(true);
-                              }}
-                            >
-                              Reprogramar
-                            </button>
-                            <button
-                              className="text-red-600 hover:text-red-700 font-medium text-sm"
-                              onClick={async () => {
-                                try {
-                                  let clienteId = user.id_cliente || user.id || user.id_usuario;
+            <>
+              {/* Tabla para desktop */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-gray-600 font-semibold">Fecha</th>
+                      <th className="px-4 py-3 text-left text-gray-600 font-semibold">Hora</th>
+                      <th className="px-4 py-3 text-left text-gray-600 font-semibold">Propiedad</th>
+                      <th className="px-4 py-3 text-left text-gray-600 font-semibold">Estado</th>
+                      <th className="px-4 py-3 text-left text-gray-600 font-semibold">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visitas.map((visita) => (
+                      <tr key={visita.id_visita} className="border-b hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          {new Date(visita.fecha_visita).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3">{visita.hora_visita}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-col">
+                            <Link to={`/propiedades/${visita.id_propiedad}`} className="text-blue-700 hover:underline font-medium">
+                              {propInfo[visita.id_propiedad]?.titulo || `Propiedad #${visita.id_propiedad}`}
+                            </Link>
+                            {propInfo[visita.id_propiedad]?.direccion && (
+                              <span className="text-xs text-gray-500">{propInfo[visita.id_propiedad].direccion}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`px-3 py-1 rounded-full text-sm ${
+                              visita.estado_visita === "Programada"
+                                ? "bg-blue-100 text-blue-800"
+                                : visita.estado_visita === "Completada"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {visita.estado_visita}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {visita.estado_visita === 'Programada' && (
+                            <div className="flex gap-3">
+                              <button
+                                className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
+                                onClick={() => {
+                                  setReprogData({ id_visita: visita.id_visita, fecha: visita.fecha_visita?.slice(0,10), hora: visita.hora_visita || '', notas: visita.notas || '' });
+                                  setShowReprogModal(true);
+                                }}
+                              >
+                                Reprogramar
+                              </button>
+                              <button
+                                className="text-red-600 hover:text-red-700 font-medium text-sm"
+                                onClick={async () => {
+                                  try {
+                                    let clienteId = user.id_cliente || user.id || user.id_usuario;
                                   if (!clienteId && user.token) clienteId = getClienteIdFromToken(user.token);
                                   await cancelVisit(visita.id_visita, clienteId);
                                   setVisitas(prev => prev.map(v => v.id_visita === visita.id_visita ? { ...v, estado_visita: 'Cancelada' } : v));
@@ -317,19 +319,80 @@ export default function ClienteDashboard() {
                 </tbody>
               </table>
             </div>
+            
+            {/* Tarjetas para móvil */}
+            <div className="md:hidden space-y-4">
+              {visitas.map((visita) => (
+                <div key={visita.id_visita} className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex justify-between items-start mb-3">
+                    <Link to={`/propiedades/${visita.id_propiedad}`} className="text-blue-700 hover:underline font-medium flex-1">
+                      {propInfo[visita.id_propiedad]?.titulo || `Propiedad #${visita.id_propiedad}`}
+                    </Link>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs ml-2 ${
+                        visita.estado_visita === "Programada"
+                          ? "bg-blue-100 text-blue-800"
+                          : visita.estado_visita === "Completada"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {visita.estado_visita}
+                    </span>
+                  </div>
+                  {propInfo[visita.id_propiedad]?.direccion && (
+                    <p className="text-xs text-gray-500 mb-2">{propInfo[visita.id_propiedad].direccion}</p>
+                  )}
+                  <div className="space-y-1 text-sm text-gray-600 mb-3">
+                    <p><span className="font-semibold">Fecha:</span> {new Date(visita.fecha_visita).toLocaleDateString()}</p>
+                    <p><span className="font-semibold">Hora:</span> {visita.hora_visita}</p>
+                  </div>
+                  {visita.estado_visita === 'Programada' && (
+                    <div className="flex gap-2">
+                      <button
+                        className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded text-sm font-medium"
+                        onClick={() => {
+                          setReprogData({ id_visita: visita.id_visita, fecha: visita.fecha_visita?.slice(0,10), hora: visita.hora_visita || '', notas: visita.notas || '' });
+                          setShowReprogModal(true);
+                        }}
+                      >
+                        Reprogramar
+                      </button>
+                      <button
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-medium"
+                        onClick={async () => {
+                          try {
+                            let clienteId = user.id_cliente || user.id || user.id_usuario;
+                            if (!clienteId && user.token) clienteId = getClienteIdFromToken(user.token);
+                            await cancelVisit(visita.id_visita, clienteId);
+                            setVisitas(prev => prev.map(v => v.id_visita === visita.id_visita ? { ...v, estado_visita: 'Cancelada' } : v));
+                            toast.success('Visita cancelada');
+                          } catch (_) {
+                            toast.error('No se pudo cancelar la visita');
+                          }
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            </>
           )}
         </div>
 
         {/* Propiedades de Interés */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Propiedades de Interés</h2>
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Propiedades de Interés</h2>
           {intereses.length === 0 ? (
-            <div className="text-gray-600">
+            <div className="text-gray-600 text-sm sm:text-base">
               <p>No has registrado interés en ninguna propiedad.</p>
               <Link to="/propiedades" className="inline-block mt-3 text-blue-600 hover:underline font-medium">Ir a ver propiedades</Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {intereses.map((interes) => (
                 <div key={interes.id_interaccion} className="border rounded-lg p-4 hover:shadow-md transition">
                   <p className="font-semibold text-gray-800">
@@ -348,15 +411,15 @@ export default function ClienteDashboard() {
         </div>
 
         {/* Favoritos */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Mis Favoritos</h2>
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Mis Favoritos</h2>
           {favoritos.length === 0 ? (
-            <div className="text-gray-600">
+            <div className="text-gray-600 text-sm sm:text-base">
               <p>Aún no has guardado propiedades como favoritas.</p>
               <Link to="/propiedades" className="inline-block mt-3 text-blue-600 hover:underline font-medium">Buscar propiedades</Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {favoritos.map(f => (
                 <div key={f.id_propiedad} className="border rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition">
                   {f.imagen ? (

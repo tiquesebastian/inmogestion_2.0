@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import DataTable from '../../components/DataTable';
 import { getProperties, updatePropertyState, deleteProperty, updateProperty, getPropertyById, getImagenesByPropiedad, uploadImagenPropiedad, deleteImagenPropiedad, updatePrioridadImagen, getLocalidades, getBarriosByLocalidad, getAllVisitas, reagendarVisita, getClientes } from '../../services/api';
 
 export default function PropiedadesAdmin() {
@@ -30,6 +31,7 @@ export default function PropiedadesAdmin() {
       const data = await getProperties({
         tipo: filters.tipo || undefined,
         localidad: filters.localidad || undefined,
+        estado: filters.estado || undefined,
       });
       const normalized = (Array.isArray(data) ? data : []).map((p, i) => ({
         id: p.id_propiedad || p.id || i,
@@ -42,7 +44,7 @@ export default function PropiedadesAdmin() {
         direccion: p.direccion_formato || p.direccion || '—',
         habitaciones: p.num_habitaciones || null,
         banos: p.num_banos || null,
-      })).filter(r => !filters.estado || r.estado === filters.estado);
+      }));
       setRows(normalized);
       // cargar imágenes para vista rápida
       const imgsMap = {};
@@ -101,7 +103,11 @@ export default function PropiedadesAdmin() {
   }, [activeTab]);
 
   const onChange = (e) => setFilters({ ...filters, [e.target.name]: e.target.value });
-  const onFilter = (e) => { e.preventDefault(); load(); };
+  const onFilter = (e) => { 
+    e.preventDefault(); 
+    setLoading(true);
+    load().finally(() => setLoading(false));
+  };
   const limpiarFiltros = () => {
     setFilters({ tipo: '', localidad: '', estado: '' });
     setLoading(true);
@@ -387,122 +393,75 @@ export default function PropiedadesAdmin() {
           </div>
         ) : (
           <div className="overflow-x-hidden">
-            {/* Vista Desktop/Tablet: Tabla tradicional */}
-            <table className="w-full table-fixed hidden md:table">
-              <thead className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-                <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-sm">ID</th>
-                  <th className="text-left px-2 py-3 font-semibold text-sm w-[18%]">Título</th>
-                  <th className="text-left px-2 py-3 font-semibold text-sm w-[9%]">Tipo</th>
-                  <th className="text-left px-2 py-3 font-semibold text-sm w-[12%]">Localidad</th>
-                  <th className="text-center px-2 py-3 font-semibold text-sm w-[6%]">🛏️</th>
-                  <th className="text-center px-2 py-3 font-semibold text-sm w-[6%]">🚿</th>
-                  <th className="text-left px-2 py-3 font-semibold text-sm w-[14%]">💰 Precio</th>
-                  <th className="text-center px-2 py-3 font-semibold text-sm w-[10%]">Estado</th>
-                  <th className="text-center px-2 py-3 font-semibold text-sm w-[19%]">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {rows.map((r, idx) => (
-                  <tr key={r.id} className={`${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition`}>
-                    <td className="px-4 py-3 text-gray-700 font-medium">{r.id}</td>
-                    <td className="px-2 py-3 text-gray-900 font-semibold truncate">
-                      <div className="flex items-center gap-3">
-                        {imagenes[r.id] && (
-                          <img src={imagenes[r.id]} alt="thumb" className="w-10 h-10 rounded object-cover border" />
-                        )}
-                        <span>{r.titulo}</span>
-                      </div>
-                    </td>
-                    <td className="px-2 py-3">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                        {r.tipo}
-                      </span>
-                    </td>
-                    <td className="px-2 py-3 text-gray-700 truncate">{r.localidad}</td>
-                    <td className="px-2 py-3 text-center">
-                      {r.habitaciones ? (
-                        <span className="inline-flex items-center justify-center w-8 h-8 bg-indigo-100 text-indigo-700 rounded-full font-semibold text-sm">
-                          {r.habitaciones}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400 text-sm">-</span>
-                      )}
-                    </td>
-                    <td className="px-2 py-3 text-center">
-                      {r.banos ? (
-                        <span className="inline-flex items-center justify-center w-8 h-8 bg-cyan-100 text-cyan-700 rounded-full font-semibold text-sm">
-                          {r.banos}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400 text-sm">-</span>
-                      )}
-                    </td>
-                    <td className="px-2 py-3 font-bold text-green-600 truncate">
-                      ${typeof r.precio === 'number' ? r.precio.toLocaleString('es-CO') : r.precio}
-                    </td>
-                    <td className="px-2 py-3 text-center">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        r.estado === 'Disponible' ? 'bg-green-100 text-green-700' : 
-                        r.estado === 'Vendida' ? 'bg-purple-100 text-purple-700' : 
-                        r.estado === 'Reservada' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {r.estado}
-                      </span>
-                    </td>
-                    <td className="px-2 py-3">
-                      <div className="flex gap-2 justify-center flex-wrap">
-                        <button 
-                          onClick={() => cambiarEstado(r.id, 'Disponible')} 
-                          className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-md font-semibold transition shadow-sm hover:shadow-md"
-                          title="Activar"
-                        >
-                          Activar
-                        </button>
-                        <button 
-                          onClick={() => cambiarEstado(r.id, 'Reservada')} 
-                          className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white text-xs rounded-md font-semibold transition shadow-sm hover:shadow-md"
-                          title="Reservar"
-                        >
-                          Reservar
-                        </button>
-                        <button 
-                          onClick={() => cambiarEstado(r.id, 'Vendida')} 
-                          className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-md font-semibold transition shadow-sm hover:shadow-md"
-                          title="Vender"
-                        >
-                          Vender
-                        </button>
-                        <button
-                          onClick={() => abrirEditar(r.id)}
-                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-md font-semibold transition shadow-sm hover:shadow-md"
-                          title="Editar"
-                        >Editar</button>
-                        <button
-                          onClick={() => eliminarPropiedad(r.id)}
-                          className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded-md font-semibold transition shadow-sm hover:shadow-md"
-                          title="Eliminar"
-                        >Eliminar</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {rows.length === 0 && (
-                  <tr>
-                    <td className="p-8 text-center text-gray-500" colSpan={9}>
-                      <div className="flex flex-col items-center">
-                        <svg className="w-16 h-16 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                        <p className="text-lg font-semibold">No hay propiedades registradas</p>
-                        <p className="text-sm text-gray-400 mt-1">Intenta ajustar los filtros o registra una nueva propiedad</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+            {/* Vista Desktop/Tablet reemplazada por DataTable */}
+            <DataTable
+              columns={[
+                { key: 'id', header: 'ID', sortable: true, width: '70px', className: 'text-left px-4' },
+                { key: 'titulo', header: 'Título', sortable: true, className: 'text-left', render: (r) => (
+                  <div className="flex items-center gap-3">
+                    {imagenes[r.id] && (
+                      <img src={imagenes[r.id]} alt="thumb" className="w-10 h-10 rounded object-cover border" />
+                    )}
+                    <span className="font-semibold text-gray-900 truncate">{r.titulo}</span>
+                  </div>
+                ) },
+                { key: 'tipo', header: 'Tipo', sortable: true, render: (r) => (
+                  <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{r.tipo}</span>
+                ) },
+                { key: 'localidad', header: 'Localidad', sortable: true, render: (r) => (
+                  <span className="truncate text-gray-700">{r.localidad}</span>
+                ) },
+                { key: 'habitaciones', header: '🛏️', sortable: true, className: 'text-center', render: (r) => (
+                  r.habitaciones ? (
+                    <span className="inline-flex items-center justify-center w-8 h-8 bg-indigo-100 text-indigo-700 rounded-full font-semibold text-sm">{r.habitaciones}</span>
+                  ) : <span className="text-gray-400 text-sm">-</span>
+                ) },
+                { key: 'banos', header: '🚿', sortable: true, className: 'text-center', render: (r) => (
+                  r.banos ? (
+                    <span className="inline-flex items-center justify-center w-8 h-8 bg-cyan-100 text-cyan-700 rounded-full font-semibold text-sm">{r.banos}</span>
+                  ) : <span className="text-gray-400 text-sm">-</span>
+                ) },
+                { key: 'precio', header: '💰 Precio', sortable: true, render: (r) => (
+                  <span className="font-bold text-green-600 truncate">${typeof r.precio === 'number' ? r.precio.toLocaleString('es-CO') : r.precio}</span>
+                ) },
+                { key: 'estado', header: 'Estado', sortable: true, className: 'text-center', render: (r) => (
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${r.estado === 'Disponible' ? 'bg-green-100 text-green-700' : r.estado === 'Vendida' ? 'bg-purple-100 text-purple-700' : r.estado === 'Reservada' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>{r.estado}</span>
+                ) },
+              ]}
+              data={rows}
+              loading={loading}
+              defaultSortKey="id"
+              rowActions={(r) => (
+                <>
+                  <button 
+                    onClick={() => cambiarEstado(r.id, 'Disponible')} 
+                    className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-md font-semibold transition shadow-sm hover:shadow-md"
+                    title="Activar"
+                  >Activar</button>
+                  <button 
+                    onClick={() => cambiarEstado(r.id, 'Reservada')} 
+                    className="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white text-xs rounded-md font-semibold transition shadow-sm hover:shadow-md"
+                    title="Reservar"
+                  >Reservar</button>
+                  <button 
+                    onClick={() => cambiarEstado(r.id, 'Vendida')} 
+                    className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs rounded-md font-semibold transition shadow-sm hover:shadow-md"
+                    title="Vender"
+                  >Vender</button>
+                  <button
+                    onClick={() => abrirEditar(r.id)}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-md font-semibold transition shadow-sm hover:shadow-md"
+                    title="Editar"
+                  >Editar</button>
+                  <button
+                    onClick={() => eliminarPropiedad(r.id)}
+                    className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded-md font-semibold transition shadow-sm hover:shadow-md"
+                    title="Eliminar"
+                  >Eliminar</button>
+                </>
+              )}
+              emptyMessage="No hay propiedades registradas"
+            />
 
             {/* Vista Móvil: Cards */}
             <div className="md:hidden divide-y divide-gray-200">

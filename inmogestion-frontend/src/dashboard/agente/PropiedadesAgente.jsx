@@ -11,6 +11,7 @@ export default function PropiedadesAgente() {
   const [rows, setRows] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [visit, setVisit] = useState({ id_propiedad: null, id_cliente: '', fecha: '', hora: '', notas: '' });
+  const [filters, setFilters] = useState({ tipo: '', localidad: '', estado: '' });
   
   // Estados para gestión de visitas
   const [visitas, setVisitas] = useState([]);
@@ -19,27 +20,67 @@ export default function PropiedadesAgente() {
   const [modalReagendar, setModalReagendar] = useState(false);
   const [activeTab, setActiveTab] = useState('propiedades'); // 'propiedades' | 'visitas'
 
+  const loadPropiedades = async () => {
+    setLoading(true); 
+    setError('');
+    try {
+      const propiedades = await getAgentProperties(user?.id);
+      console.log('📊 Propiedades cargadas:', propiedades);
+      if (propiedades.length > 0) console.log('🖼️ Primera propiedad:', propiedades[0]);
+      // Aplicar filtros locales
+      let filtradas = propiedades;
+      if (filters.tipo) {
+        filtradas = filtradas.filter(p => (p.tipo_propiedad || p.tipo || '').toLowerCase().includes(filters.tipo.toLowerCase()));
+      }
+      if (filters.localidad) {
+        filtradas = filtradas.filter(p => (p.nombre_localidad || p.localidad || '').toLowerCase().includes(filters.localidad.toLowerCase()));
+      }
+      if (filters.estado) {
+        filtradas = filtradas.filter(p => (p.estado_propiedad || p.estado) === filters.estado);
+      }
+      setRows(filtradas);
+    } catch (e) {
+      setError(e.message || 'Error cargando propiedades');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Cargar clientes solo una vez al montar
   useEffect(() => {
     (async () => {
-      setLoading(true); setError('');
       try {
-        const [propiedades, clientesData] = await Promise.all([
-          getAgentProperties(user?.id),
-          getClientes()
-        ]);
-        setRows(propiedades);
+        const clientesData = await getClientes();
         setClientes(clientesData);
       } catch (e) {
-        setError(e.message || 'Error cargando datos');
-      } finally {
-        setLoading(false);
+        console.error('Error cargando clientes:', e);
       }
     })();
-  }, [user]);
+  }, []);
+
+  // Cargar propiedades solo una vez al montar o cuando cambia el user.id
+  useEffect(() => {
+    if (user?.id) {
+      loadPropiedades();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const openVisit = (id_propiedad) => {
     setVisit({ id_propiedad, id_cliente: '', fecha: '', hora: '', notas: '' });
     setError('');
+  };
+
+  const onChange = (e) => setFilters({ ...filters, [e.target.name]: e.target.value });
+  
+  const onFilter = (e) => { 
+    e.preventDefault(); 
+    loadPropiedades();
+  };
+  
+  const limpiarFiltros = () => {
+    setFilters({ tipo: '', localidad: '', estado: '' });
+    loadPropiedades();
   };
 
   const submitVisit = async (e) => {
@@ -150,6 +191,57 @@ export default function PropiedadesAgente() {
       </div>
 
       {activeTab === 'propiedades' && (
+      <>
+      {/* Formulario de filtros */}
+      <form onSubmit={onFilter} className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg shadow-md p-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <input 
+            name="tipo" 
+            value={filters.tipo} 
+            onChange={onChange} 
+            placeholder="Tipo (Casa, Apartamento...)" 
+            className="border border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm sm:text-base" 
+          />
+          <input 
+            name="localidad" 
+            value={filters.localidad} 
+            onChange={onChange} 
+            placeholder="Localidad" 
+            className="border border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm sm:text-base" 
+          />
+          <select 
+            name="estado" 
+            value={filters.estado} 
+            onChange={onChange} 
+            className="border border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm sm:text-base"
+          >
+            <option value="">Todos los estados</option>
+            <option value="Disponible">Disponible</option>
+            <option value="Reservada">Reservada</option>
+            <option value="Vendida">Vendida</option>
+          </select>
+          <div className="flex gap-2">
+            <button 
+              type="submit" 
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-4 sm:px-6 py-2.5 transition shadow-md hover:shadow-lg text-sm sm:text-base"
+            >
+              🔍 Filtrar
+            </button>
+          </div>
+        </div>
+        {(filters.tipo || filters.localidad || filters.estado) && (
+          <div className="flex justify-center mt-4">
+            <button
+              type="button"
+              onClick={limpiarFiltros}
+              className="bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg px-4 sm:px-6 py-2 transition shadow-md text-sm sm:text-base"
+            >
+              ↻ Ver todas las propiedades
+            </button>
+          </div>
+        )}
+      </form>
+
       <div className="bg-white rounded-lg shadow p-6">
         {loading ? (
           <div className="text-gray-600">Cargando...</div>
@@ -157,16 +249,55 @@ export default function PropiedadesAgente() {
           <div className="text-red-600">{error}</div>
         ) : (
           <div className="grid md:grid-cols-2 gap-4">
-            {rows.map((p, i) => (
-              <article key={p.id_propiedad || p.id || i} className="border rounded p-4">
-                <h3 className="font-semibold text-blue-900">{p.titulo || p.tipo_propiedad || 'Propiedad'}</h3>
-                <p className="text-sm text-gray-700">{p.direccion_formato || p.direccion || 'Dirección'}</p>
-                <p className="text-sm text-gray-700">{p.nombre_localidad || p.localidad}</p>
-                <p className="font-bold text-green-700 mt-2">${(p.precio_propiedad || 0).toLocaleString('es-CO')}</p>
-                <button onClick={() => openVisit(p.id_propiedad || p.id || i)} className="mt-3 bg-blue-600 text-white rounded px-3 py-1">Agendar visita</button>
-              </article>
-            ))}
-            {rows.length === 0 && <div className="text-gray-600">No tienes propiedades asignadas</div>}
+            {rows.map((p, i) => {
+              // Construir URL de imagen
+              let imagenUrl = '/images/default-property.svg';
+              if (p.imagenes && p.imagenes.length > 0 && p.imagenes[0].url_imagen) {
+                imagenUrl = p.imagenes[0].url_imagen;
+              } else if (p.imagen_principal) {
+                imagenUrl = p.imagen_principal;
+              
+                            console.log(`Propiedad ${p.id_propiedad}: imagen = ${imagenUrl}`);
+              }
+              
+              return (
+                <article key={p.id_propiedad || p.id || i} className="border rounded-lg overflow-hidden shadow-md hover:shadow-xl transition bg-white">
+                  <div className="h-48 bg-gray-200 overflow-hidden">
+                    <img 
+                      src={imagenUrl} 
+                      alt={p.titulo || p.tipo_propiedad || 'Propiedad'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { 
+                        e.target.onerror = null;
+                        e.target.src = '/images/default-property.svg'; 
+                      }}
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-semibold text-blue-900 text-lg">{p.titulo || p.tipo_propiedad || 'Propiedad'}</h3>
+                    <p className="text-sm text-gray-700 mt-1">{p.direccion_formato || p.direccion || 'Dirección'}</p>
+                    <p className="text-sm text-gray-600">{p.nombre_localidad || p.localidad}</p>
+                    <p className="font-bold text-green-700 mt-2 text-xl">${(p.precio_propiedad || 0).toLocaleString('es-CO')}</p>
+                    <div className="mt-3 flex gap-2">
+                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                        p.estado_propiedad === 'Disponible' ? 'bg-green-100 text-green-700' :
+                        p.estado_propiedad === 'Reservada' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {p.estado_propiedad || 'Disponible'}
+                      </span>
+                    </div>
+                    <button 
+                      onClick={() => openVisit(p.id_propiedad || p.id || i)} 
+                      className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-2 font-semibold transition"
+                    >
+                      📅 Agendar visita
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+            {rows.length === 0 && <div className="text-gray-600 col-span-2 text-center py-8">No tienes propiedades asignadas</div>}
           </div>
         )}
 
@@ -250,6 +381,7 @@ export default function PropiedadesAgente() {
           </div>
         )}
       </div>
+      </>
       )}
 
       {/* Tab de Visitas */}

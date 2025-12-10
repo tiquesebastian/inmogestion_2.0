@@ -3,7 +3,9 @@ import {
   registroCliente,
   loginCliente,
   solicitarRecuperacion,
-  resetearContrasena
+  resetearContrasena,
+  verificarEmailCliente,
+  reenviarVerificacionCliente
 } from "../controllers/authCliente.controller.js";
 
 const router = express.Router();
@@ -16,5 +18,7 @@ router.post("/login-cliente", loginCliente);
 router.post("/recuperar", solicitarRecuperacion);
 // Resetear contraseña
 router.post("/resetear", resetearContrasena);
+router.get("/verificar-email-cliente/:token", verificarEmailCliente);
+router.post("/reenviar-verificacion-cliente", reenviarVerificacionCliente);
 
 export default router;

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { createProperty, getLocalidades, getBarriosByLocalidad, uploadImagenPropiedad } from '../../services/api';
 import AuthContext from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 export default function RegistrarPropiedad() {
   const { user } = useContext(AuthContext);
+  const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
   
   // Estados del formulario
   const [formData, setFormData] = useState({
@@ -101,9 +103,15 @@ export default function RegistrarPropiedad() {
     setError('');
     setSuccess('');
 
-    // Validaciones
-    if (!formData.direccion_formato || !formData.precio_propiedad || !formData.area_m2 || !formData.num_habitaciones || !formData.num_banos || !formData.id_barrio) {
+    // Validaciones básicas
+    if (!formData.direccion_formato || !formData.precio_propiedad || !formData.area_m2 || !formData.id_barrio) {
       setError('Por favor completa todos los campos obligatorios');
+      return;
+    }
+
+    // Para Casa y Apartamento, habitaciones y baños son obligatorios
+    if (formData.tipo_propiedad !== 'Lote' && (!formData.num_habitaciones || !formData.num_banos)) {
+      setError('Por favor especifica el número de habitaciones y baños');
       return;
     }
 
@@ -115,8 +123,8 @@ export default function RegistrarPropiedad() {
         direccion_formato: formData.direccion_formato,
         precio_propiedad: parseFloat(formData.precio_propiedad),
         area_m2: parseFloat(formData.area_m2),
-        num_habitaciones: parseInt(formData.num_habitaciones),
-        num_banos: parseInt(formData.num_banos),
+        num_habitaciones: formData.tipo_propiedad === 'Lote' ? 0 : parseInt(formData.num_habitaciones),
+        num_banos: formData.tipo_propiedad === 'Lote' ? 0 : parseInt(formData.num_banos),
         descripcion: formData.descripcion || null,
         estado_propiedad: formData.estado_propiedad,
         id_barrio: parseInt(formData.id_barrio),
@@ -131,13 +139,19 @@ export default function RegistrarPropiedad() {
           for (let i = 0; i < imagenes.length; i++) {
             await uploadImagenPropiedad(result.id_propiedad, imagenes[i], i, `Imagen ${i + 1}`);
           }
-          setSuccess('✅ Propiedad e imágenes registradas exitosamente');
+          const msg = '✅ Propiedad e imágenes registradas exitosamente';
+          setSuccess(msg);
+          toastSuccess(msg, 6000);
         } catch (imgError) {
-          setSuccess('✅ Propiedad registrada, pero hubo un error al subir algunas imágenes');
+          const msg = '✅ Propiedad registrada, pero hubo un error al subir algunas imágenes';
+          setSuccess(msg);
+          toastInfo(msg, 6000);
           console.error('Error subiendo imágenes:', imgError);
         }
       } else {
-        setSuccess('✅ Propiedad registrada exitosamente');
+        const msg = '✅ Propiedad registrada exitosamente';
+        setSuccess(msg);
+        toastSuccess(msg, 6000);
       }
       
       // Limpiar formulario
@@ -158,27 +172,28 @@ export default function RegistrarPropiedad() {
       setImagePreview([]);
       
     } catch (err) {
-      setError('❌ ' + err.message);
+      const msg = '❌ ' + err.message;
+      setError(msg);
+      toastError(msg, 6000);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-8">
+    <div className="bg-white rounded-lg shadow-lg p-8 relative">
+      {/* Alerta sticky */}
+      {(error || success) && (
+        <div className="sticky top-0 mb-4 z-30">
+          <div className={`p-3 rounded-lg shadow ${
+            success ? 'bg-green-50 border border-green-300 text-green-700' : 'bg-red-50 border border-red-300 text-red-700'
+          }`}>
+            {success || error}
+          </div>
+        </div>
+      )}
+
       <h2 className="text-3xl font-bold mb-6 text-blue-900">Registrar Nueva Propiedad</h2>
-      
-      {success && (
-        <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-          {success}
-        </div>
-      )}
-      
-      {error && (
-        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -319,43 +334,45 @@ export default function RegistrarPropiedad() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Habitaciones */}
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-gray-700">
-              Número de Habitaciones <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              name="num_habitaciones"
-              value={formData.num_habitaciones}
-              onChange={handleChange}
-              placeholder="Ej: 3"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              required
-              min="0"
-              step="1"
-            />
-          </div>
+        {formData.tipo_propiedad !== 'Lote' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Habitaciones */}
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
+                Número de Habitaciones <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                name="num_habitaciones"
+                value={formData.num_habitaciones}
+                onChange={handleChange}
+                placeholder="Ej: 3"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required={formData.tipo_propiedad !== 'Lote'}
+                min="0"
+                step="1"
+              />
+            </div>
 
-          {/* Baños */}
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-gray-700">
-              Número de Baños <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              name="num_banos"
-              value={formData.num_banos}
-              onChange={handleChange}
-              placeholder="Ej: 2"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              required
-              min="0"
-              step="1"
-            />
+            {/* Baños */}
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
+                Número de Baños <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                name="num_banos"
+                value={formData.num_banos}
+                onChange={handleChange}
+                placeholder="Ej: 2"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required={formData.tipo_propiedad !== 'Lote'}
+                min="0"
+                step="1"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Descripción */}
         <div>

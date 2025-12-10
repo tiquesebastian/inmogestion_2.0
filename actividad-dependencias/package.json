@@ -1,0 +1,16 @@
+{
+  "name": "actividad-dependencias-demo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"(demo) no hay tests definidos\" && exit 0"
+  },
+  "keywords": [],
+  "author": "InmoGestion Team",
+  "license": "ISC",
+  "description": "Demostración de aislamiento y versionamiento reproducible con Express 4.16.0",
+  "dependencies": {
+    "express": "4.16.0"
+  }
+}

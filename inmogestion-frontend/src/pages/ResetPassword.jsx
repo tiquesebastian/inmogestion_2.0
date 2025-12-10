@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const tipo = searchParams.get('tipo') || 'usuario';
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -51,7 +52,11 @@ export default function ResetPassword() {
       if (response.ok) {
         setMessage(data.message);
         setTimeout(() => {
-          navigate('/login');
+          if (tipo === 'admin' || tipo === 'agente') {
+            navigate('/inmogestion');
+          } else {
+            navigate('/login');
+          }
         }, 2000);
       } else {
         setError(data.message || 'Error al restablecer contraseña');

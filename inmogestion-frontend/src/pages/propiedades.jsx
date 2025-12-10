@@ -32,6 +32,9 @@ export default function Propiedades() {
 
   // Filtrar propiedades
   const propiedadesFiltradas = propiedades.filter((propiedad) => {
+    // Solo mostrar propiedades disponibles
+    if (propiedad.estado_propiedad !== 'Disponible') return false;
+    
     // Filtro por tipo
     if (tipo !== "Todos" && propiedad.tipo_propiedad !== tipo) return false;
     

@@ -21,7 +21,9 @@ export default function Inicio() {
       try {
         const response = await fetch('http://localhost:4000/api/propiedades?limit=8');
         const data = await response.json();
-        setPropiedadesDestacadas(data.slice(0, 8)); // Mostrar máximo 8 propiedades
+        // Filtrar solo propiedades disponibles
+        const disponibles = data.filter(p => p.estado_propiedad === 'Disponible');
+        setPropiedadesDestacadas(disponibles.slice(0, 8)); // Mostrar máximo 8 propiedades
         setLoading(false);
       } catch (error) {
         console.error('Error cargando propiedades:', error);

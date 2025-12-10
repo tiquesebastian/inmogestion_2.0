@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getUsers } from '../../services/api';
+import DataTable from '../../components/DataTable';
 
 export default function UsuariosAdmin() {
   const [loading, setLoading] = useState(true);
@@ -22,6 +23,15 @@ export default function UsuariosAdmin() {
 
   const filtered = rol ? rows.filter(r => r.rol === rol) : rows;
 
+  // Normalización ligera para asegurar claves esperadas
+  const normalized = filtered.map((u, i) => ({
+    id: u.id_usuario || u.id || i,
+    nombre: u.nombre || u.nombre_usuario || '—',
+    email: u.email || u.correo || '—',
+    rol: u.rol || u.tipo_rol || '—',
+    estado: u.estado || 'Activo'
+  }));
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">Gestión de Usuarios</h2>
@@ -36,42 +46,24 @@ export default function UsuariosAdmin() {
         </select>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-auto">
-        {loading ? (
-          <div className="p-6 text-gray-600">Cargando...</div>
-        ) : error ? (
-          <div className="p-6 text-red-600">{error}</div>
-        ) : (
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="text-left p-3">ID</th>
-                <th className="text-left p-3">Nombre</th>
-                <th className="text-left p-3">Correo</th>
-                <th className="text-left p-3">Rol</th>
-                <th className="text-left p-3">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((u) => (
-                <tr key={u.id_usuario || u.id} className="border-t">
-                  <td className="p-3">{u.id_usuario || u.id}</td>
-                  <td className="p-3">{u.nombre}</td>
-                  <td className="p-3">{u.email}</td>
-                  <td className="p-3">{u.rol}</td>
-                  <td className="p-3">
-                    <span className={`px-2 py-1 rounded text-xs ${u.estado === 'Activo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                      {u.estado || 'Activo'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr><td className="p-6 text-center text-gray-600" colSpan={5}>Sin usuarios</td></tr>
-              )}
-            </tbody>
-          </table>
-        )}
+      <div className="bg-white rounded-lg shadow p-2">
+        <DataTable
+          data={normalized}
+          loading={loading}
+          emptyMessage={error ? error : 'Sin usuarios'}
+          defaultSortKey="id"
+          columns={[
+            { key: 'id', header: 'ID', sortable: true, width: '70px', className: 'text-left px-3' },
+            { key: 'nombre', header: 'Nombre', sortable: true, render: (r) => <span className="font-medium text-gray-800 truncate">{r.nombre}</span> },
+            { key: 'email', header: 'Correo', sortable: true, render: (r) => <span className="text-gray-600 truncate">{r.email}</span> },
+            { key: 'rol', header: 'Rol', sortable: true, render: (r) => (
+              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">{r.rol}</span>
+            ) },
+            { key: 'estado', header: 'Estado', sortable: true, className: 'text-center', render: (r) => (
+              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${r.estado === 'Activo' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>{r.estado}</span>
+            ) },
+          ]}
+        />
       </div>
     </div>
   );

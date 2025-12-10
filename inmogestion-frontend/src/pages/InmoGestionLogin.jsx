@@ -31,29 +31,35 @@ export default function InmoGestionLogin() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ correo, contrasena: password }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Error en el login");
-
-      // Guardar token y datos de usuario
-      const userData = {
-        ...data.usuario,
-        token: data.token,
-        rol: data.usuario.rol,
-      };
-      login(userData);
-
-      // Redirigir según rol
-      setTimeout(() => {
-        if (userData.rol === 1 || userData.rol === "Administrador") {
-          navigate("/admin/propiedades");
-        } else if (userData.rol === 2 || userData.rol === "Agente") {
-          navigate("/agente/propiedades");
-        } else {
-          navigate("/");
-        }
-      }, 100);
+      let data;
+      try { data = await res.json(); } catch { data = {}; }
+      if (!res.ok) {
+        // Mapear códigos para mensajes más claros
+        const statusMsg = {
+          401: "Contraseña incorrecta",
+          404: "Usuario no encontrado",
+          403: "Correo no verificado. Revisa tu bandeja o solicita reenvío.",
+        }[res.status];
+        setError(data.message || statusMsg || "Error en el login");
+      } else {
+        const userData = {
+          ...data.usuario,
+          token: data.token,
+          rol: data.usuario.rol,
+        };
+        login(userData);
+        setTimeout(() => {
+          if (userData.rol === 1 || userData.rol === "Administrador") {
+            navigate("/admin/propiedades");
+          } else if (userData.rol === 2 || userData.rol === "Agente") {
+            navigate("/agente/propiedades");
+          } else {
+            navigate("/");
+          }
+        }, 100);
+      }
     } catch (err) {
-      setError(err.message || "Credenciales inválidas");
+      setError(err.message || "Error de conexión");
     }
     setLoading(false);
   };

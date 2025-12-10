@@ -171,7 +171,7 @@ const ClientRegistration = ({ onSuccess }) => {
         throw new Error(data.message || 'Error en el registro');
       }
       
-      setSuccess('¡Registro exitoso! Ahora puedes iniciar sesión.');
+      setSuccess('¡Registro exitoso! Revisa tu correo para verificar tu cuenta.');
       setForm({ 
         nombre_cliente: '', 
         apellido_cliente: '', 

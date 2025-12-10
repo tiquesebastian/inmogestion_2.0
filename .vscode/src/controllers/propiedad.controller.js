@@ -16,7 +16,7 @@ import {
  */
 export const obtenerPropiedadesFiltradas = async (req, res) => {
   try {
-    const { tipo, localidad, precioMin, precioMax, habitaciones, banos } = req.query;
+    const { tipo, localidad, precioMin, precioMax, habitaciones, banos, estado } = req.query;
     let query = `SELECT p.*, b.nombre_barrio, l.nombre_localidad, u.nombre AS agente FROM propiedad p
       JOIN barrio b ON p.id_barrio = b.id_barrio
       JOIN localidad l ON b.id_localidad = l.id_localidad
@@ -28,8 +28,16 @@ export const obtenerPropiedadesFiltradas = async (req, res) => {
       params.push(tipo);
     }
     if (localidad) {
-      query += " AND l.nombre_localidad LIKE ?";
-      params.push(`%${localidad}%`);
+      // Comparación insensible a mayúsculas y tildes
+      query += " AND LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(l.nombre_localidad,'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u')) LIKE ?";
+      const localidadNormalizada = localidad
+        .toLowerCase()
+        .replace(/á/g, 'a')
+        .replace(/é/g, 'e')
+        .replace(/í/g, 'i')
+        .replace(/ó/g, 'o')
+        .replace(/ú/g, 'u');
+      params.push(`%${localidadNormalizada}%`);
     }
     if (precioMin) {
       query += " AND p.precio_propiedad >= ?";
@@ -47,9 +55,52 @@ export const obtenerPropiedadesFiltradas = async (req, res) => {
       query += " AND p.num_banos >= ?";
       params.push(Number(banos));
     }
-    query += " AND p.estado_propiedad = 'Disponible' ORDER BY p.fecha_registro DESC";
+    // Filtrar por estado solo si se proporciona, de lo contrario mostrar todas
+    if (estado) {
+      query += " AND p.estado_propiedad = ?";
+      params.push(estado);
+    }
+    query += " ORDER BY p.fecha_registro DESC";
     const [rows] = await db.query(query, params);
-    res.json(rows);
+    
+    // Obtener imágenes para las propiedades filtradas (si la tabla existe)
+    let imagenesPorPropiedad = {};
+    if (rows.length > 0) {
+      try {
+        const propIds = rows.map(r => r.id_propiedad);
+        const [imagenes] = await db.query(`
+          SELECT id_propiedad, id_imagen, url, prioridad, descripcion 
+          FROM imagen_propiedad 
+          WHERE id_propiedad IN (?)
+          ORDER BY id_propiedad, prioridad DESC
+        `, [propIds]);
+        
+        // Agrupar imágenes por propiedad
+        imagenes.forEach(img => {
+          if (!imagenesPorPropiedad[img.id_propiedad]) {
+            imagenesPorPropiedad[img.id_propiedad] = [];
+          }
+          imagenesPorPropiedad[img.id_propiedad].push({
+            id_imagen: img.id_imagen,
+            url_imagen: img.url,
+            prioridad: img.prioridad,
+            descripcion: img.descripcion
+          });
+        });
+      } catch (error) {
+        console.warn('⚠️  Tabla imagen_propiedad no disponible:', error.message);
+      }
+      
+      // Agregar imágenes a cada propiedad
+      const propiedadesConImagenes = rows.map(prop => ({
+        ...prop,
+        imagenes: imagenesPorPropiedad[prop.id_propiedad] || []
+      }));
+      
+      res.json(propiedadesConImagenes);
+    } else {
+      res.json(rows);
+    }
   } catch (error) {
     console.error("Error en obtenerPropiedadesFiltradas:", error);
     res.status(500).json({ message: "Error al filtrar propiedades", error: error.message });

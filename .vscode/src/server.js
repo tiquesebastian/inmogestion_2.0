@@ -20,6 +20,7 @@ import barrioRoutes from "./routes/barrio.routes.js";
 import contratoDocumentoRoutes from "./routes/contratoDocumento.routes.js";
 import documentoClienteRoutes from "./routes/documentoCliente.routes.js";
 import passwordRecoveryRoutes from "./routes/passwordRecovery.routes.js";
+import emailVerificationRoutes from "./routes/emailVerification.routes.js";
 
 // Servicios
 import { iniciarTareaRecordatorios } from "./services/recordatorios.service.js";
@@ -93,6 +94,7 @@ app.use("/api/documentos-clientes", documentoClienteRoutes);
 // Aquí va el login, registro y otras rutas abiertas
 app.use("/api/auth", authRoutes);
 app.use("/api/auth", authClienteRoutes);
+app.use("/api/auth", emailVerificationRoutes);
 app.use("/api/password-recovery", passwordRecoveryRoutes);
 
 // Iniciar el servidor en el puerto configurado

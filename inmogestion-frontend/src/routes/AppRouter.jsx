@@ -16,6 +16,7 @@ import RecuperarContrasenaUsuario from "../pages/RecuperarContrasenaUsuario";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import ResetPasswordCliente from "../pages/ResetPasswordCliente";
+import VerificarEmail from "../pages/VerificarEmail";
 import TerminosCondiciones from "../pages/TerminosCondiciones";
 import Contacto from "../pages/contacto";
 import Agentes from "../pages/agentes";
@@ -74,6 +75,7 @@ export default function AppRouter() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/forgot-password-cliente" element={<RecuperarContrasenaCliente />} />
             <Route path="/reset-password-cliente" element={<ResetPasswordCliente />} />
+            <Route path="/verificar-email" element={<VerificarEmail />} />
             <Route path="/terminos-condiciones" element={<TerminosCondiciones />} />
             <Route path="/propiedades" element={<FilteredProperties />} />
             <Route path="/propiedades/:id" element={<PropertyDetail />} />

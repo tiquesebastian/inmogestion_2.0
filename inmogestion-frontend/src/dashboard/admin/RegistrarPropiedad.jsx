@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { createProperty, getLocalidades, getBarriosByLocalidad, uploadImagenPropiedad } from '../../services/api';
 import AuthContext from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext.jsx';
 
 export default function RegistrarPropiedad() {
   const { user } = useContext(AuthContext);
+  const { success: toastSuccess, error: toastError, info: toastInfo } = useToast();
   
   // Estados del formulario
   const [formData, setFormData] = useState({
@@ -102,9 +104,19 @@ export default function RegistrarPropiedad() {
     setError('');
     setSuccess('');
 
-    // Validaciones
-    if (!formData.direccion_formato || !formData.precio_propiedad || !formData.area_m2 || !formData.num_habitaciones || !formData.num_banos || !formData.id_barrio) {
-      setError('Por favor completa todos los campos obligatorios');
+    // Validaciones básicas
+    if (!formData.direccion_formato || !formData.precio_propiedad || !formData.area_m2 || !formData.id_barrio) {
+      const msg = 'Por favor completa todos los campos obligatorios';
+      setError(msg);
+      toastError(msg, 6000);
+      return;
+    }
+
+    // Para Casa y Apartamento, habitaciones y baños son obligatorios
+    if (formData.tipo_propiedad !== 'Lote' && (!formData.num_habitaciones || !formData.num_banos)) {
+      const msg = 'Por favor especifica el número de habitaciones y baños';
+      setError(msg);
+      toastError(msg, 6000);
       return;
     }
 
@@ -116,8 +128,8 @@ export default function RegistrarPropiedad() {
         direccion_formato: formData.direccion_formato,
         precio_propiedad: parseFloat(formData.precio_propiedad),
         area_m2: parseFloat(formData.area_m2),
-        num_habitaciones: parseInt(formData.num_habitaciones),
-        num_banos: parseInt(formData.num_banos),
+        num_habitaciones: formData.tipo_propiedad === 'Lote' ? 0 : parseInt(formData.num_habitaciones),
+        num_banos: formData.tipo_propiedad === 'Lote' ? 0 : parseInt(formData.num_banos),
         descripcion: formData.descripcion || null,
         estado_propiedad: formData.estado_propiedad,
         id_barrio: parseInt(formData.id_barrio),
@@ -133,13 +145,19 @@ export default function RegistrarPropiedad() {
             await uploadImagenPropiedad(result.id_propiedad, imagenes[i], i, `Imagen ${i + 1}`);
           }
           setSuccess('✅ Propiedad e imágenes registradas exitosamente');
+          toastSuccess('Propiedad e imágenes registradas', 6000);
         } catch (imgError) {
-          setSuccess('✅ Propiedad registrada, pero hubo un error al subir algunas imágenes');
+          const msgWarn = '✅ Propiedad registrada, pero hubo error en algunas imágenes';
+          setSuccess(msgWarn);
+          toastInfo(msgWarn, 6000);
           console.error('Error subiendo imágenes:', imgError);
         }
       } else {
         setSuccess('✅ Propiedad registrada exitosamente');
+        toastSuccess('Propiedad registrada', 6000);
       }
+      
+      // No necesitamos scroll: alerta sticky
       
       // Limpiar formulario
       setFormData({
@@ -159,27 +177,26 @@ export default function RegistrarPropiedad() {
       setImagePreview([]);
       
     } catch (err) {
-      setError('❌ ' + err.message);
+      const msg = '❌ ' + err.message;
+      setError(msg);
+      toastError(err.message, 6000);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-8">
+    <div className="bg-white rounded-lg shadow-lg p-8 relative">
+      {/* Alerta sticky superior */}
+      {(success || error) && (
+        <div className="sticky top-0 z-30 mb-6">
+          <div className={`p-4 rounded-lg shadow ${success ? 'bg-green-50 border border-green-300 text-green-700' : 'bg-red-50 border border-red-300 text-red-700'}`}> 
+            {success || error}
+          </div>
+        </div>
+      )}
+
       <h2 className="text-3xl font-bold mb-6 text-blue-900">Registrar Nueva Propiedad</h2>
-      
-      {success && (
-        <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
-          {success}
-        </div>
-      )}
-      
-      {error && (
-        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-          {error}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -199,6 +216,7 @@ export default function RegistrarPropiedad() {
               <option value="Apartamento">Apartamento</option>
               <option value="Lote">Lote</option>
             </select>
+            <p className="text-xs text-gray-500 mt-1">Define el tipo para validar campos obligatorios.</p>
           </div>
 
           {/* Estado */}
@@ -217,6 +235,7 @@ export default function RegistrarPropiedad() {
               <option value="Reservada">Reservada</option>
               <option value="Vendida">Vendida</option>
             </select>
+            <p className="text-xs text-gray-500 mt-1">El estado controla visibilidad en listados públicos.</p>
           </div>
         </div>
 
@@ -234,6 +253,7 @@ export default function RegistrarPropiedad() {
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             required
           />
+          <p className="text-xs text-gray-500 mt-1">Formato estándar: vía + número (mejora búsquedas).</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -255,6 +275,7 @@ export default function RegistrarPropiedad() {
                 </option>
               ))}
             </select>
+            <p className="text-xs text-gray-500 mt-1">Primero elige localidad para cargar barrios.</p>
           </div>
 
           {/* Barrio */}
@@ -279,6 +300,7 @@ export default function RegistrarPropiedad() {
                 </option>
               ))}
             </select>
+            <p className="text-xs text-gray-500 mt-1">Listado dinámico según localidad seleccionada.</p>
           </div>
         </div>
 
@@ -299,6 +321,7 @@ export default function RegistrarPropiedad() {
               min="0"
               step="0.01"
             />
+            <p className="text-xs text-gray-500 mt-1">Valor total en pesos colombianos (sin separadores).</p>
           </div>
 
           {/* Área */}
@@ -317,46 +340,51 @@ export default function RegistrarPropiedad() {
               min="0"
               step="0.01"
             />
+            <p className="text-xs text-gray-500 mt-1">Usa decimales para áreas no enteras.</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Habitaciones */}
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-gray-700">
-              Número de Habitaciones <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              name="num_habitaciones"
-              value={formData.num_habitaciones}
-              onChange={handleChange}
-              placeholder="Ej: 3"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              required
-              min="0"
-              step="1"
-            />
-          </div>
+        {formData.tipo_propiedad !== 'Lote' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Habitaciones */}
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
+                Número de Habitaciones <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                name="num_habitaciones"
+                value={formData.num_habitaciones}
+                onChange={handleChange}
+                placeholder="Ej: 3"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required={formData.tipo_propiedad !== 'Lote'}
+                min="0"
+                step="1"
+              />
+              <p className="text-xs text-gray-500 mt-1">Para Lote no se requiere este campo.</p>
+            </div>
 
-          {/* Baños */}
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-gray-700">
-              Número de Baños <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              name="num_banos"
-              value={formData.num_banos}
-              onChange={handleChange}
-              placeholder="Ej: 2"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              required
-              min="0"
-              step="1"
-            />
+            {/* Baños */}
+            <div>
+              <label className="block text-sm font-semibold mb-2 text-gray-700">
+                Número de Baños <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                name="num_banos"
+                value={formData.num_banos}
+                onChange={handleChange}
+                placeholder="Ej: 2"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                required={formData.tipo_propiedad !== 'Lote'}
+                min="0"
+                step="1"
+              />
+              <p className="text-xs text-gray-500 mt-1">Incluye medios baños si aplica.</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Descripción */}
         <div>
@@ -371,6 +399,7 @@ export default function RegistrarPropiedad() {
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             rows="4"
           />
+          <p className="text-xs text-gray-500 mt-1">Información adicional atractiva para compradores.</p>
         </div>
 
         {/* Imágenes */}
@@ -388,6 +417,7 @@ export default function RegistrarPropiedad() {
           <p className="text-xs text-gray-500 mt-1">
             Puedes seleccionar múltiples imágenes. La primera será la imagen principal.
           </p>
+          <p className="text-xs text-gray-400">Máximo 10 imágenes. Formatos recomendados: JPG/PNG.</p>
           
           {/* Preview de imágenes */}
           {imagePreview.length > 0 && (
@@ -447,6 +477,7 @@ export default function RegistrarPropiedad() {
               setSelectedLocalidad('');
               setError('');
               setSuccess('');
+              toastInfo('Formulario limpiado', 3000);
             }}
             className="bg-gray-400 hover:bg-gray-500 text-white font-semibold py-3 px-6 rounded-lg transition"
           >

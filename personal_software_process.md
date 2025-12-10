@@ -93,4 +93,4 @@ Reducir defectos a menos de 5/KLOC en el siguiente ciclo.
 
 🔗 Enlace al repositorio GitHub con README.md
 
-(Reemplaza con tu enlace real al subirlo.)
+https://github.com/tiquesebastian/InmoGestion/blob/main/personal_software_process.md

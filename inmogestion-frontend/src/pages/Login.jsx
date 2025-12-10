@@ -2,6 +2,7 @@
 import { useState, useContext, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
+import ReenviarVerificacion from "../components/ReenviarVerificacion";
 
 export default function Login() {
   const [usuario, setUsuario] = useState("");
@@ -9,6 +10,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [tipoLogin, setTipoLogin] = useState("cliente"); // "cliente" o "usuario"
+  const [mostrarReenvio, setMostrarReenvio] = useState(false);
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -52,6 +54,13 @@ export default function Login() {
       const data = await res.json();
 
       if (!res.ok) {
+        // Si error 403 (correo no verificado), mostrar componente de reenvío
+        if (res.status === 403) {
+          setError(data.message || "Correo no verificado");
+          setMostrarReenvio(true);
+          setLoading(false);
+          return;
+        }
         throw new Error(data.message || "Error en el login");
       }
 
@@ -85,52 +94,59 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <form onSubmit={handleSubmit} className="bg-white p-12 rounded-lg shadow-xl w-full max-w-xl">
-        <h1 className="text-3xl font-extrabold mb-8 text-center text-blue-900">Iniciar Sesión</h1>
+      <div className="w-full max-w-xl space-y-6">
+        <form onSubmit={handleSubmit} className="bg-white p-12 rounded-lg shadow-xl">
+          <h1 className="text-3xl font-extrabold mb-8 text-center text-blue-900">Iniciar Sesión</h1>
 
-        {error && <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">{error}</div>}
+          {error && <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">{error}</div>}
 
-        {/* Solo login de cliente, sin selector */}
+          {/* Solo login de cliente, sin selector */}
 
-        <input
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
-          type="text"
-          placeholder={tipoLogin === "cliente" ? "Usuario o correo electrónico" : "Correo electrónico"}
-          className="w-full text-lg p-4 border border-gray-300 rounded mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+          <input
+            value={usuario}
+            onChange={(e) => setUsuario(e.target.value)}
+            type="text"
+            placeholder={tipoLogin === "cliente" ? "Usuario o correo electrónico" : "Correo electrónico"}
+            className="w-full text-lg p-4 border border-gray-300 rounded mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
 
-        <input
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          type="password"
-          placeholder="Contraseña"
-          className="w-full text-lg p-4 border border-gray-300 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+          <input
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            placeholder="Contraseña"
+            className="w-full text-lg p-4 border border-gray-300 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
 
-        <div className="mb-6 text-right">
-          <Link 
-            to={tipoLogin === "cliente" ? "/forgot-password-cliente" : "/forgot-password"} 
-            className="text-blue-600 hover:underline text-sm"
+          <div className="mb-6 text-right">
+            <Link 
+              to={tipoLogin === "cliente" ? "/forgot-password-cliente" : "/forgot-password"} 
+              className="text-blue-600 hover:underline text-sm"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-blue-600 text-white text-lg font-semibold py-4 rounded hover:bg-blue-700 transition disabled:bg-gray-400"
           >
-            ¿Olvidaste tu contraseña?
-          </Link>
-        </div>
+            {loading ? "Entrando..." : "Entrar"}
+          </button>
 
-        <button 
-          type="submit" 
-          disabled={loading}
-          className="w-full bg-blue-600 text-white text-lg font-semibold py-4 rounded hover:bg-blue-700 transition disabled:bg-gray-400"
-        >
-          {loading ? "Entrando..." : "Entrar"}
-        </button>
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
+              ¿No tienes cuenta? <Link to="/registro-cliente" className="text-blue-600 hover:underline font-semibold">Regístrate aquí</Link>
+            </p>
+          </div>
+        </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            ¿No tienes cuenta? <Link to="/registro-cliente" className="text-blue-600 hover:underline font-semibold">Regístrate aquí</Link>
-          </p>
-        </div>
-      </form>
+        {/* Mostrar componente de reenvío si correo no verificado */}
+        {mostrarReenvio && (
+          <ReenviarVerificacion tipo={tipoLogin} />
+        )}
+      </div>
     </div>
   );
 }

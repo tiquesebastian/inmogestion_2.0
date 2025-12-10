@@ -386,3 +386,28 @@ export const enviarEmailRecuperacionPassword = async (emailData) => {
 };
 
 export default transporter;
+/**
+ * Email de verificación de correo (usuario o cliente)
+ */
+export const enviarEmailVerificacion = async (data) => {
+  const { email, nombre, token, tipoUsuario } = data;
+  // Construir enlace backend directo
+  const baseBackend = process.env.BACKEND_URL || 'http://localhost:4000';
+  const path = tipoUsuario === 'cliente' ? 'verificar-email-cliente' : 'verificar-email-usuario';
+  const verifyUrl = `${baseBackend}/api/auth/${path}/${token}`;
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: email,
+    subject: '✔ Verifica tu correo - InmoGestión',
+    html: `<!DOCTYPE html><html><head><style>body{font-family:Arial,sans-serif;color:#333;} .container{max-width:600px;margin:0 auto;padding:20px;} .header{background:#2563eb;color:#fff;padding:25px;text-align:center;border-radius:8px 8px 0 0;} .content{background:#fff;padding:30px;border:1px solid #e5e7eb;} .btn{display:inline-block;padding:14px 26px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;margin:25px 0;} .footer{font-size:12px;color:#6b7280;text-align:center;margin-top:30px;} .warning{background:#fef3c7;border-left:4px solid #f59e0b;padding:12px;margin-top:20px;border-radius:4px;}</style></head><body><div class="container"><div class="header"><h1>InmoGestión</h1><p>Verificación de correo</p></div><div class="content"><h2>Hola ${nombre},</h2><p>Gracias por registrarte. Para activar tu cuenta verifica tu correo:</p><div style="text-align:center"><a class="btn" href="${verifyUrl}">Verificar correo</a></div><p>Si el botón no funciona, copia y pega este enlace:</p><p style="word-break:break-all;font-size:14px"><a href="${verifyUrl}">${verifyUrl}</a></p><div class="warning"><strong>Importante:</strong> El enlace expira en 24 horas.</div><p style="margin-top:25px;font-size:14px;color:#555">Si no creaste esta cuenta puedes ignorar este mensaje.</p></div><div class="footer">© 2025 InmoGestión. Mensaje automático.</div></div></body></html>`
+  };
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email verificación enviado:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Error email verificación:', error);
+    return { success: false, error: error.message };
+  }
+};

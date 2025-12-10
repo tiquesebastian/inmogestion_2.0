@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import db from '../config/db.js';
 import { enviarEmailRecuperacionPassword } from '../services/email.service.js';
+import { audit } from '../middleware/audit.middleware.js';
 
 /**
  * Solicitar recuperación de contraseña (Usuario/Agente/Admin)
@@ -29,21 +30,27 @@ export const solicitarRecuperacionUsuario = async (req, res) => {
 
     // Generar token único
     const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
     const resetTokenExpires = new Date(Date.now() + 3600000); // 1 hora
 
-    // Guardar token en BD
+    // Guardar token hasheado en BD
     await db.query(
       'UPDATE usuario SET reset_token = ?, reset_token_expires = ? WHERE id_usuario = ?',
-      [resetToken, resetTokenExpires, usuario.id_usuario]
+      [resetTokenHash, resetTokenExpires, usuario.id_usuario]
     );
 
-    // Enviar email
+    // Enviar email (con token original, no el hash)
     await enviarEmailRecuperacionPassword({
       email: usuario.correo,
       nombre: `${usuario.nombre} ${usuario.apellido}`,
       resetToken,
       tipoUsuario: 'usuario'
     });
+
+    // Auditar solicitud de recuperación
+    await audit.passwordReset(usuario.correo, 'usuario', req, 'request').catch(err => 
+      console.error('Error auditando solicitud reset:', err)
+    );
 
     // En desarrollo, incluir token en respuesta para testing sin email
     const isDev = process.env.NODE_ENV === 'development' || !process.env.EMAIL_USER;
@@ -86,21 +93,27 @@ export const solicitarRecuperacionCliente = async (req, res) => {
 
     // Generar token único
     const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
     const resetTokenExpires = new Date(Date.now() + 3600000); // 1 hora
 
-    // Guardar token en BD
+    // Guardar token hasheado en BD
     await db.query(
       'UPDATE cliente SET reset_token = ?, reset_token_expires = ? WHERE id_cliente = ?',
-      [resetToken, resetTokenExpires, cliente.id_cliente]
+      [resetTokenHash, resetTokenExpires, cliente.id_cliente]
     );
 
-    // Enviar email
+    // Enviar email (con token original, no el hash)
     await enviarEmailRecuperacionPassword({
       email: cliente.correo_cliente,
       nombre: `${cliente.nombre_cliente} ${cliente.apellido_cliente}`,
       resetToken,
       tipoUsuario: 'cliente'
     });
+
+    // Auditar solicitud de recuperación
+    await audit.passwordReset(cliente.correo_cliente, 'cliente', req, 'request').catch(err => 
+      console.error('Error auditando solicitud reset cliente:', err)
+    );
 
     // En desarrollo, incluir token en respuesta para testing sin email
     const isDev = process.env.NODE_ENV === 'development' || !process.env.EMAIL_USER;
@@ -133,10 +146,13 @@ export const restablecerPasswordUsuario = async (req, res) => {
       return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
     }
 
-    // Buscar usuario con token válido
+    // Hashear el token recibido para comparar con el almacenado
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Buscar usuario con token hasheado válido
     const [usuarios] = await db.query(
       'SELECT id_usuario, nombre FROM usuario WHERE reset_token = ? AND reset_token_expires > NOW()',
-      [token]
+      [tokenHash]
     );
 
     if (usuarios.length === 0) {
@@ -152,6 +168,11 @@ export const restablecerPasswordUsuario = async (req, res) => {
     await db.query(
       'UPDATE usuario SET contrasena = ?, reset_token = NULL, reset_token_expires = NULL WHERE id_usuario = ?',
       [hashedPassword, usuario.id_usuario]
+    );
+
+    // Auditar restablecimiento exitoso
+    await audit.passwordReset(usuario.nombre, 'usuario', req, 'reset').catch(err => 
+      console.error('Error auditando reset exitoso:', err)
     );
 
     res.json({ message: 'Contraseña actualizada exitosamente' });
@@ -176,10 +197,13 @@ export const restablecerPasswordCliente = async (req, res) => {
       return res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
     }
 
-    // Buscar cliente con token válido
+    // Hashear el token recibido para comparar con el almacenado
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Buscar cliente con token hasheado válido
     const [clientes] = await db.query(
       'SELECT id_cliente, nombre_cliente FROM cliente WHERE reset_token = ? AND reset_token_expires > NOW()',
-      [token]
+      [tokenHash]
     );
 
     if (clientes.length === 0) {
@@ -195,6 +219,11 @@ export const restablecerPasswordCliente = async (req, res) => {
     await db.query(
       'UPDATE cliente SET contrasena = ?, reset_token = NULL, reset_token_expires = NULL WHERE id_cliente = ?',
       [hashedPassword, cliente.id_cliente]
+    );
+
+    // Auditar restablecimiento exitoso
+    await audit.passwordReset(cliente.nombre_cliente, 'cliente', req, 'reset').catch(err => 
+      console.error('Error auditando reset exitoso cliente:', err)
     );
 
     res.json({ message: 'Contraseña actualizada exitosamente' });
