@@ -1,24 +1,28 @@
-import mysql from "mysql2/promise";  // Importar cliente MySQL con soporte para promesas
-import dotenv from "dotenv";          // Importar dotenv para cargar variables de entorno
+import mysql from "mysql2/promise";  
+import dotenv from "dotenv";          
 
-dotenv.config();  // Cargar variables de entorno desde el archivo .env
+dotenv.config();  
 
-// Crear una conexión a la base de datos usando datos del .env
-const db = await mysql.createConnection({
-  host: process.env.DB_HOST,       // Dirección del servidor de base de datos
-  user: process.env.DB_USER,       // Usuario para la conexión
-  password: process.env.DB_PASSWORD, // Contraseña para el usuario
-  database: process.env.DB_NAME,     // Nombre de la base de datos a usar
-  port: process.env.DB_PORT,         // Puerto donde escucha el servidor MySQL
+// Crear pool de conexiones (mejor práctica y maneja errores mejor)
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,       
+  user: process.env.DB_USER,       
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,     
+  port: process.env.DB_PORT || 3306,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-// Intentar conectar a la base de datos para verificar que esté todo OK
-try {
-  await db.connect(); // Intentar conexión
-  console.log("✅ Conexión exitosa a la base de datos MySQL"); // Mensaje de éxito
-} catch (err) {
-  // Capturar cualquier error y mostrarlo en consola
-  console.error("❌ Error conectando a MySQL:", err.message);
-}
+// Probar conexión sin bloquear el inicio del servidor
+pool.getConnection()
+  .then(conn => {
+    console.log("✅ Conexión exitosa a la base de datos MySQL");
+    conn.release();
+  })
+  .catch(err => {
+    console.error("❌ Error conectando a MySQL:", err.message);
+  });
 
-export default db; // Exportar la conexión para usarla en otros módulos
+export default pool;
