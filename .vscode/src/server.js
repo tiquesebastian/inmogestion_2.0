@@ -45,7 +45,7 @@ app.use('/uploads', express.static('uploads'));
 
 // Ruta raíz para comprobar que el servidor está activo
 app.get('/', (req, res) => {
-  res.send('Servidor funcionando correctamente 🚀');
+  res.send('Servidor funcionando correctamente 🚀 v2');
 });
 
 // Rutas principales protegidas con autenticación y autorización
