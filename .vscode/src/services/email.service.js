@@ -1,7 +1,10 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 
-dotenv.config();
+// Cargar .env solo en desarrollo
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 
 // Configurar transporter de Nodemailer
 const transporter = nodemailer.createTransport({

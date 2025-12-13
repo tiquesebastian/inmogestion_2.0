@@ -28,8 +28,10 @@ import { iniciarTareaRecordatorios } from "./services/recordatorios.service.js";
 // Middlewares para seguridad y autorización
 import { verificarToken, verificarRol } from "./middleware/auth.middleware.js";
 
-// Cargar variables de entorno desde archivo .env
-dotenv.config();
+// Cargar variables de entorno desde archivo .env solo en desarrollo
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 
 const app = express();
 
