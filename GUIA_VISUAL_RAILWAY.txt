@@ -1,0 +1,255 @@
+
+🚀 ╔════════════════════════════════════════════════════════════════╗
+   ║         DESPLEGAR INMOGESTION EN RAILWAY - GUÍA VISUAL         ║
+   ╚════════════════════════════════════════════════════════════════╝
+
+
+PASO 1️⃣: CREAR PROYECTO EN RAILWAY
+═══════════════════════════════════════════════════════════════════════
+
+   Abre en tu navegador:
+   ┌─────────────────────────────────────────────┐
+   │  https://railway.app                        │
+   └─────────────────────────────────────────────┘
+
+   1️⃣  Haz clic en "New Project"
+   
+   2️⃣  Selecciona "Deploy from GitHub"
+   
+   3️⃣  Conecta tu cuenta de GitHub (si no lo has hecho)
+   
+   4️⃣  Busca y selecciona: tiquesebastian/inmogestion_2.0
+   
+   5️⃣  Elige rama: main
+   
+   6️⃣  Railway comienza a desplegar automáticamente
+       (Espera a que termine)
+
+
+PASO 2️⃣: AGREGAR BASE DE DATOS MYSQL
+═══════════════════════════════════════════════════════════════════════
+
+   En el dashboard de Railway:
+   
+   1️⃣  Haz clic en "+ Add"
+   
+   2️⃣  Busca "Database"
+   
+   3️⃣  Selecciona "MySQL"
+   
+   4️⃣  Railway crea la BD automáticamente
+       (Espera a que esté lista)
+
+
+PASO 3️⃣: COPIAR CREDENCIALES DE MYSQL
+═══════════════════════════════════════════════════════════════════════
+
+   En la pestaña de MySQL en Railway:
+   
+   Verás algo como esto:
+   ┌─────────────────────────────────────────────┐
+   │ MYSQLHOST      → prod-xxxxx.xx.railway.app  │
+   │ MYSQLPORT      → 3306                       │
+   │ MYSQLUSER      → root                       │
+   │ MYSQLPASSWORD  → [contraseña generada]      │
+   │ MYSQLDATABASE  → inmogestion                │
+   └─────────────────────────────────────────────┘
+   
+   📝 COPIA ESTOS VALORES, los necesitarás después
+
+
+PASO 4️⃣: CONFIGURAR VARIABLES EN RAILWAY
+═══════════════════════════════════════════════════════════════════════
+
+   En Railway → Selecciona el servicio Backend → Pestaña "Variables"
+   
+   Pegа las siguientes variables (usa los valores copiados arriba):
+   
+   ┌─────────────────────────────────────────────────────────┐
+   │ DB_HOST          = <MYSQLHOST>                          │
+   │ DB_PORT          = <MYSQLPORT>                          │
+   │ DB_USER          = <MYSQLUSER>                          │
+   │ DB_PASSWORD      = <MYSQLPASSWORD>                      │
+   │ DB_NAME          = <MYSQLDATABASE>                      │
+   │ PORT             = 4000                                 │
+   │ NODE_ENV         = production                           │
+   │ EMAIL_HOST       = smtp.gmail.com                       │
+   │ EMAIL_PORT       = 587                                  │
+   │ EMAIL_USER       = tiquesebastian53@gmail.com          │
+   │ EMAIL_PASS       = zpvifywa sktbwmkl                   │
+   │ JWT_SECRET       = supersecret                          │
+   │ BACKEND_URL      = https://[ID-railway].up.railway.app │
+   │ FRONTEND_URL     = https://[ID-railway].up.railway.app │
+   └─────────────────────────────────────────────────────────┘
+   
+   Nota: Railway te da el ID automáticamente
+
+
+PASO 5️⃣: INICIALIZAR BASE DE DATOS
+═══════════════════════════════════════════════════════════════════════
+
+   OPCIÓN A: Usar phpMyAdmin (MÁS FÁCIL) 👈
+
+      1️⃣  En Railway → "+ Add Service"
+      
+      2️⃣  Busca "phpMyAdmin"
+      
+      3️⃣  Agrégalo al proyecto
+      
+      4️⃣  Una vez listo, abre la URL de phpMyAdmin
+      
+      5️⃣  Inicia sesión con credenciales de MySQL
+         Usuario: <MYSQLUSER>
+         Contraseña: <MYSQLPASSWORD>
+      
+      6️⃣  En phpMyAdmin → Import
+      
+      7️⃣  Selecciona archivo:
+         inmogestion-frontend/nueva _estructura/BASE_DATOS_COMPLETA.sql
+      
+      8️⃣  Haz clic en "Import"
+      
+      9️⃣  ¡Listo! BD importada
+
+
+   OPCIÓN B: Usar Railway CLI
+
+      1️⃣  Abre tu terminal
+      
+      2️⃣  npm install -g @railway/cli
+      
+      3️⃣  railway login
+      
+      4️⃣  railway link
+      
+      5️⃣  Ejecuta el comando SQL:
+         
+         mysql -h <DB_HOST> \
+               -u <DB_USER> \
+               -p<DB_PASSWORD> \
+               <DB_NAME> < "inmogestion-frontend/nueva _estructura/BASE_DATOS_COMPLETA.sql"
+
+
+PASO 6️⃣: VERIFICAR QUE TODO FUNCIONA
+═══════════════════════════════════════════════════════════════════════
+
+   En tu terminal (o navegador):
+   
+   curl https://[TU-URL-RAILWAY].up.railway.app/
+   
+   Deberías ver:
+   ┌─────────────────────────────────────────────┐
+   │ Servidor funcionando correctamente 🚀       │
+   └─────────────────────────────────────────────┘
+   
+   ✅ ¡Felicidades! Tu backend está online
+
+
+PASO 7️⃣: (OPCIONAL) DESPLEGAR FRONTEND
+═══════════════════════════════════════════════════════════════════════
+
+   Si quieres servir el React app también:
+   
+   1️⃣  En Railway → "+ Add Service"
+   
+   2️⃣  Selecciona tu repositorio otra vez
+   
+   3️⃣  Configura como segundo servicio
+   
+   4️⃣  Variables:
+      VITE_API_URL = https://[BACKEND].up.railway.app
+      VITE_JWT_SECRET = supersecret
+   
+   5️⃣  ¡Listo! Frontend también en vivo
+
+
+📊 DIAGRAMA FINAL
+═══════════════════════════════════════════════════════════════════════
+
+                          INTERNET
+                            ↓
+                         Railway
+                            ↓
+                    ┌─────────────────┐
+                    │   Tu Proyecto   │
+                    ├─────────────────┤
+                    │ Backend Node.js │
+                    │   Puerto: 4000  │
+                    ├─────────────────┤
+                    │  MySQL Database │
+                    │   Puerto: 3306  │
+                    └─────────────────┘
+
+
+🎯 ESTADO DEL DEPLOYMENT
+═══════════════════════════════════════════════════════════════════════
+
+   Backend API       ✅ En vivo en Railway
+   MySQL Database    ✅ En vivo en Railway
+   Base de datos     ✅ Importada y lista
+   Logs              ✅ Visibles en Railway Dashboard
+   Auto-deploy       ✅ Cada push a GitHub dispara nuevo deploy
+
+
+⚡ COMANDOS ÚTILES DESPUÉS
+═══════════════════════════════════════════════════════════════════════
+
+   Ver logs en tiempo real:
+   → Railway Dashboard → Seleccionar servicio → "View Logs"
+   
+   Cambiar una variable:
+   → Railway Dashboard → Variables → Editar → Cambiar → ¡Automático!
+   
+   Revertir versión anterior:
+   → Railway Dashboard → Deployments → Seleccionar → Rollback
+   
+   Conectar a BD remotamente:
+   mysql -h <MYSQLHOST> -u <MYSQLUSER> -p<MYSQLPASSWORD> <MYSQLDATABASE>
+
+
+❓ PROBLEMAS COMUNES
+═══════════════════════════════════════════════════════════════════════
+
+   ❌ "502 Bad Gateway"
+      → Backend no está respondiendo
+      → Ver logs en Railway para detalles
+      → Verificar que las dependencias se instalaron
+   
+   ❌ "Cannot connect to database"
+      → Credenciales incorrectas
+      → Copiar directo desde Railway, no del .env local
+   
+   ❌ "404 - Not Found"
+      → Servidor no está en puerto 4000
+      → Revisar que start script sea correcto
+   
+   ❌ "BD vacía después de importar"
+      → Esperar a que phpMyAdmin termine
+      → Verificar que el archivo SQL sea válido
+      → Intentar dividir el SQL en archivos más pequeños
+
+
+✨ TIPS PRO
+═══════════════════════════════════════════════════════════════════════
+
+   💡 Cada git push a main = Deploy automático
+   💡 Las variables se cambian sin redeploy
+   💡 Railway genera URLs automáticamente
+   💡 MySQL se instancia en segundos
+   💡 Los logs se ven en tiempo real
+   💡 Puedes revertir a versiones anteriores
+   💡 Railway es gratis hasta X uso mensual
+
+
+📞 CONTACTO
+═══════════════════════════════════════════════════════════════════════
+
+   Railway Docs:   https://docs.railway.app/
+   Railway Discord: https://discord.gg/railway
+   GitHub Issues:  https://github.com/tiquesebastian/inmogestion_2.0
+
+
+═══════════════════════════════════════════════════════════════════════
+¡Tu InmoGestion estará en vivo en ~10 minutos! 🎉
+═══════════════════════════════════════════════════════════════════════
+
