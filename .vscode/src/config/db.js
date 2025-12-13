@@ -3,6 +3,13 @@ import dotenv from "dotenv";
 
 dotenv.config();  
 
+// Debug: Mostrar variables de entorno
+console.log("🔍 Variables de BD cargadas:");
+console.log("  DB_HOST:", process.env.DB_HOST);
+console.log("  DB_PORT:", process.env.DB_PORT);
+console.log("  DB_USER:", process.env.DB_USER);
+console.log("  DB_NAME:", process.env.DB_NAME);
+
 // Crear pool de conexiones (mejor práctica y maneja errores mejor)
 const pool = mysql.createPool({
   host: process.env.DB_HOST,       
