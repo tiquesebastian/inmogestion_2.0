@@ -1,23 +1,9 @@
 // src/services/api.js
 
-// Base URL: usa variable de entorno si existe, si no, cae al proxy /api (solo desarrollo).
-// En producción (Vercel), usar URL absoluta del backend en Railway
+// Base URL: 
+// - En desarrollo: /api (que vía vite.config.js proxy a localhost:4000)
+// - En producción: /api (que vía vercel.json rewrite a Railway)
 let API_BASE = "/api";
-
-// En producción, intentar usar URL absoluta del backend de Railway
-if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-  API_BASE = 'https://inmogestion20-production-fdf7.up.railway.app/api';
-}
-
-// Si existe VITE_API_URL, sobrescribir
-try {
-  const envUrl = import.meta?.env?.VITE_API_URL;
-  if (envUrl) {
-    API_BASE = envUrl;
-  }
-} catch (_) {
-  // Ignorar si import.meta no está disponible
-}
 
 console.log('[API] API_BASE final:', API_BASE);
 console.log('[API] hostname:', window?.location?.hostname);
