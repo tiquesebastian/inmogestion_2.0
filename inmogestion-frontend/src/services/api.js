@@ -3,13 +3,20 @@
 // Base URL: usa variable de entorno si existe, si no, cae al proxy /api.
 // Simplificamos a acceso directo porque este archivo solo corre en entorno Vite (frontend).
 let API_BASE = "/api";
+let ENV_BASE;
 try {
-  if (import.meta && import.meta.env && import.meta.env.VITE_API_URL) {
-    API_BASE = import.meta.env.VITE_API_URL;
-  }
+  ENV_BASE = import.meta?.env?.VITE_API_URL;
+  if (ENV_BASE) API_BASE = ENV_BASE;
 } catch (_) {
   // Ignorar si import.meta no está disponible (fallback ya definido)
 }
+// Log en producción para verificar configuración
+try {
+  if (typeof window !== 'undefined') {
+    console.log('[API] VITE_API_URL =', ENV_BASE);
+    console.log('[API] API_BASE =', API_BASE);
+  }
+} catch (_) {}
 
 // Helper: construye query string a partir de un objeto
 const toQuery = (params = {}) => {
