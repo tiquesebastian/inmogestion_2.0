@@ -70,6 +70,7 @@ export async function getProperties(params = {}) {
   // Intenta usar el endpoint de filtro si hay parámetros, o lista general si no
   const hasFilters = Object.values(params).some((v) => v !== undefined && v !== null && v !== "");
   const path = hasFilters ? `/propiedades/filter${toQuery(params)}` : `/propiedades`;
+  console.log('[getProperties] Llamando con path:', path, 'API_BASE:', API_BASE);
   try {
     return await apiFetch(path);
   } catch (e) {
