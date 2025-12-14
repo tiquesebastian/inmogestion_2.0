@@ -37,9 +37,11 @@ const toQuery = (params = {}) => {
 async function apiFetch(path, options = {}) {
   const silent = options.silent || false;
   const fullUrl = `${API_BASE}${path}`;
-  console.log('[API] Fetching:', fullUrl);
   const res = await fetch(fullUrl, {
-    headers: { 'Accept': 'application/json', ...(options.headers || {}) },
+    method: options.method || 'GET',
+    mode: 'cors',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', ...(options.headers || {}) },
     ...options,
   });
   const contentType = res.headers.get('content-type') || '';
@@ -70,7 +72,6 @@ export async function getProperties(params = {}) {
   // Intenta usar el endpoint de filtro si hay parámetros, o lista general si no
   const hasFilters = Object.values(params).some((v) => v !== undefined && v !== null && v !== "");
   const path = hasFilters ? `/propiedades/filter${toQuery(params)}` : `/propiedades`;
-  console.log('[getProperties] Llamando con path:', path, 'API_BASE:', API_BASE);
   try {
     return await apiFetch(path);
   } catch (e) {

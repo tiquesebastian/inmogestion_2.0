@@ -38,8 +38,22 @@ const app = express();
 // Puerto en el que correrá el servidor, puede venir del .env o usar 4000 por defecto
 const PORT = process.env.PORT || 4000;
 
+// Configurar CORS para permitir peticiones desde el frontend en Vercel
+const corsOptions = {
+  origin: [
+    'http://localhost:5173', // Desarrollo local
+    'http://localhost:3000',  // Alternativa desarrollo
+    'https://inmogestion-2-0.vercel.app', // Frontend en Vercel
+    'https://inmogestin-2-0.vercel.app', // Con caracteres especiales (si aplica)
+    process.env.FRONTEND_URL || '' // Variable de entorno si existe
+  ].filter(Boolean),
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
 // Middlewares globales
-app.use(cors()); // Permite solicitudes desde otros orígenes (CORS)
+app.use(cors(corsOptions)); // Permite solicitudes desde otros orígenes (CORS)
 app.use(express.json()); // Permite interpretar solicitudes con JSON en el cuerpo
 
 // Servir archivos estáticos (imágenes)
