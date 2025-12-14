@@ -1,27 +1,26 @@
 // src/services/api.js
 
 // Base URL: usa variable de entorno si existe, si no, cae al proxy /api (solo desarrollo).
-// En producción, VITE_API_URL DEBE estar configurado.
+// En producción (Vercel), usar URL absoluta del backend en Railway
 let API_BASE = "/api";
-let ENV_BASE;
+
+// En producción, intentar usar URL absoluta del backend de Railway
+if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+  API_BASE = 'https://inmogestion20-production-fdf7.up.railway.app/api';
+}
+
+// Si existe VITE_API_URL, sobrescribir
 try {
-  ENV_BASE = import.meta?.env?.VITE_API_URL;
-  if (ENV_BASE) {
-    API_BASE = ENV_BASE;
-  } else if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    console.warn('[API] ⚠️ VITE_API_URL no configurado en producción. Usando fallback /api');
+  const envUrl = import.meta?.env?.VITE_API_URL;
+  if (envUrl) {
+    API_BASE = envUrl;
   }
 } catch (_) {
-  // Ignorar si import.meta no está disponible (fallback ya definido)
+  // Ignorar si import.meta no está disponible
 }
-// Log en producción para verificar configuración
-try {
-  if (typeof window !== 'undefined') {
-    console.log('[API] VITE_API_URL =', ENV_BASE);
-    console.log('[API] API_BASE =', API_BASE);
-    console.log('[API] hostname =', window.location.hostname);
-  }
-} catch (_) {}
+
+console.log('[API] API_BASE final:', API_BASE);
+console.log('[API] hostname:', window?.location?.hostname);
 
 // Helper: construye query string a partir de un objeto
 const toQuery = (params = {}) => {
