@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://inmogestion20-production-fdf7.up.railway.app/api/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "https://inmogestion20-production-fdf7.up.railway.app/uploads/:path*"
     }
   ]
 }
