@@ -7,6 +7,8 @@
 
 Interfaz de usuario moderna para la plataforma InmoGestión. Construida con React, Vite y TailwindCSS.
 
+Nota de redeploy: actualización menor para forzar build en Vercel.
+
 ---
 
 ## 📋 Tabla de Contenidos
