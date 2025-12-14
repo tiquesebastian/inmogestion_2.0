@@ -8,7 +8,7 @@ import InmoGestionLogin from "../pages/InmoGestionLogin";
 
 // Páginas públicas
 import Inicio from "../pages/inicio";
-import Login from "../pages/login";
+import Login from "../pages/Login";
 import Registro from "../pages/registro";
 import RegistroCliente from "../pages/RegistroCliente";
 import RecuperarContrasenaCliente from "../pages/RecuperarContrasenaCliente";
