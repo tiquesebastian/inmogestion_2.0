@@ -31,7 +31,9 @@ const toQuery = (params = {}) => {
 // Helper: wrapper fetch con manejo de errores y JSON automático
 async function apiFetch(path, options = {}) {
   const silent = options.silent || false;
-  const res = await fetch(`${API_BASE}${path}`, {
+  const fullUrl = `${API_BASE}${path}`;
+  console.log('[API] Fetching:', fullUrl);
+  const res = await fetch(fullUrl, {
     headers: { 'Accept': 'application/json', ...(options.headers || {}) },
     ...options,
   });
