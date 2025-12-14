@@ -1,12 +1,16 @@
 // src/services/api.js
 
-// Base URL: usa variable de entorno si existe, si no, cae al proxy /api.
-// Simplificamos a acceso directo porque este archivo solo corre en entorno Vite (frontend).
+// Base URL: usa variable de entorno si existe, si no, cae al proxy /api (solo desarrollo).
+// En producción, VITE_API_URL DEBE estar configurado.
 let API_BASE = "/api";
 let ENV_BASE;
 try {
   ENV_BASE = import.meta?.env?.VITE_API_URL;
-  if (ENV_BASE) API_BASE = ENV_BASE;
+  if (ENV_BASE) {
+    API_BASE = ENV_BASE;
+  } else if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    console.warn('[API] ⚠️ VITE_API_URL no configurado en producción. Usando fallback /api');
+  }
 } catch (_) {
   // Ignorar si import.meta no está disponible (fallback ya definido)
 }
@@ -15,6 +19,7 @@ try {
   if (typeof window !== 'undefined') {
     console.log('[API] VITE_API_URL =', ENV_BASE);
     console.log('[API] API_BASE =', API_BASE);
+    console.log('[API] hostname =', window.location.hostname);
   }
 } catch (_) {}
 

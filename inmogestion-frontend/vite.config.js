@@ -5,6 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    // Proxy solo aplica en desarrollo local (Vite dev server)
+    // En producción (Vercel) se usa VITE_API_URL con URL absoluta
     proxy: {
       '/api': {
         target: 'http://localhost:4000',
@@ -22,12 +24,16 @@ export default defineConfig({
           });
         },
       },
-      // Proxy para archivos estáticos servidos por el backend (/uploads/...)
       '/uploads': {
         target: 'http://localhost:4000',
         changeOrigin: true,
         secure: false,
       },
     },
+  },
+  build: {
+    // En build (producción), asegurar que no hay rutas relativas para /api
+    outDir: 'dist',
+    emptyOutDir: true,
   },
 });
