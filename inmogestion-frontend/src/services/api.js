@@ -24,8 +24,12 @@ async function apiFetch(path, options = {}) {
   const fullUrl = `${API_BASE}${path}`;
   const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json', ...(options.headers || {}) };
   try {
-    const token = localStorage.getItem('token');
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const user = localStorage.getItem('user');
+    if (user) {
+      const parsed = JSON.parse(user);
+      const token = parsed?.token;
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+    }
   } catch (_) {
     // localStorage no disponible (SSR), continuar sin token
   }
