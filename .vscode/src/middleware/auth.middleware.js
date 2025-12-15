@@ -30,8 +30,28 @@ export const verificarToken = (rolesPermitidos = []) => {
 
 // ✅ Middleware adicional para validar un rol específico (opcional)
 export const verificarRol = (rolRequerido) => {
+  const rolesPermitidos = Array.isArray(rolRequerido) ? rolRequerido : [rolRequerido];
   return (req, res, next) => {
-    if (req.user?.rol !== rolRequerido) {
+    const userRol = req.user?.rol;
+    // Soporta números o etiquetas en la BD ("Administrador", "Agente", etc.)
+    const normalizar = (r) =>
+      typeof r === 'string'
+        ? r.toLowerCase()
+        : Number.isFinite(r)
+          ? String(r)
+          : '';
+
+    const userRolNorm = normalizar(userRol);
+    const allow = rolesPermitidos.some((r) => {
+      const rolNorm = normalizar(r);
+      // Aceptar equivalencias comunes de admin
+      if (rolNorm === '1' || rolNorm === 'administrador' || rolNorm === 'admin') {
+        return ['1', 'administrador', 'admin'].includes(userRolNorm);
+      }
+      return rolNorm === userRolNorm;
+    });
+
+    if (!allow) {
       return res.status(403).json({ message: "No tienes permiso para esta acción" });
     }
     next();
