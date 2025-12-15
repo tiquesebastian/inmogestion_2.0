@@ -53,7 +53,12 @@ export default function CargaMasiva() {
         body: formData
       });
 
-      const result = await response.json();
+      let result = { message: '' };
+      try {
+        result = await response.json();
+      } catch (_) {
+        result = { message: response.ok ? 'Documento subido correctamente' : 'Error al subir documento' };
+      }
 
       if (response.ok) {
         setMensaje(`✅ ${result.message}`);
@@ -74,10 +79,17 @@ export default function CargaMasiva() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">📂 Carga de Documentos</h1>
+      <h1 className="text-3xl font-bold mb-2 text-gray-800">📂 Carga de Documentos</h1>
       <p className="text-gray-600 mb-6">
         Sube documentos de clientes (cédulas, comprobantes, escrituras, etc.)
       </p>
+      {clienteSeleccionado && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+          <p className="text-sm text-blue-800">
+            Este documento se registrará para el cliente seleccionado.
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6 space-y-5">
         

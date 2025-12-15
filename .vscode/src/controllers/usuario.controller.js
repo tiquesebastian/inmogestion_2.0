@@ -257,3 +257,45 @@ export const reenviarVerificacionUsuario = async (req, res) => {
     res.status(500).json({ message: "Error al reenviar verificación", error: error.message });
   }
 };
+
+// ===== Admin: Listar usuarios =====
+export const listarUsuarios = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT id_usuario, nombre, apellido, correo, telefono, nombre_usuario, id_rol, estado
+       FROM usuario`
+    );
+    const mapped = rows.map(u => ({
+      id_usuario: u.id_usuario,
+      nombre: u.nombre,
+      apellido: u.apellido,
+      correo: u.correo,
+      telefono: u.telefono,
+      nombre_usuario: u.nombre_usuario,
+      rol: u.id_rol === 1 ? 'Administrador' : u.id_rol === 2 ? 'Agente' : 'Cliente',
+      estado: u.estado || 'Activo'
+    }));
+    res.json(mapped);
+  } catch (error) {
+    res.status(500).json({ message: 'Error listando usuarios', error: error.message });
+  }
+};
+
+// ===== Admin: Actualizar estado de usuario =====
+export const actualizarEstadoUsuario = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado } = req.body;
+    if (!estado || !['Activo','Inactivo','Bloqueado'].includes(estado)) {
+      return res.status(400).json({ message: 'Estado inválido' });
+    }
+    const [result] = await db.query(
+      'UPDATE usuario SET estado = ? WHERE id_usuario = ?',
+      [estado, id]
+    );
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Usuario no encontrado' });
+    res.json({ message: 'Estado actualizado', id_usuario: Number(id), estado });
+  } catch (error) {
+    res.status(500).json({ message: 'Error actualizando estado', error: error.message });
+  }
+};

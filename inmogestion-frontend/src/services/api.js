@@ -163,12 +163,32 @@ export async function updatePropertyState(id, estado) {
 
 // ==== Usuarios (mock) ====
 export async function getUsers() {
-  // Mock temporal hasta tener endpoint real
-  return [
-    { id_usuario: 1, nombre: 'Admin', email: 'admin@inmogestion.com', rol: 'Administrador', estado: 'Activo' },
-    { id_usuario: 2, nombre: 'Ana Agente', email: 'agente.ana@inmogestion.com', rol: 'Agente', estado: 'Activo' },
-    { id_usuario: 3, nombre: 'Luis Cliente', email: 'luis@mail.com', rol: 'Cliente', estado: 'Activo' },
-  ];
+  try {
+    const data = await apiFetch(`/usuarios`);
+    // Normaliza mínimamente campos
+    return (Array.isArray(data) ? data : []).map(u => ({
+      id_usuario: u.id_usuario || u.id,
+      nombre: u.nombre || u.nombre_usuario,
+      correo: u.correo || u.email,
+      rol: u.rol || u.id_rol,
+      estado: u.estado || 'Activo'
+    }));
+  } catch (e) {
+    console.warn('getUsers fallback (mock):', e.message);
+    return [
+      { id_usuario: 1, nombre: 'Admin', correo: 'admin@inmogestion.com', rol: 'Administrador', estado: 'Activo' },
+      { id_usuario: 2, nombre: 'Ana Agente', correo: 'agente.ana@inmogestion.com', rol: 'Agente', estado: 'Activo' },
+      { id_usuario: 3, nombre: 'Luis Cliente', correo: 'luis@mail.com', rol: 'Cliente', estado: 'Activo' },
+    ];
+  }
+}
+
+export async function updateUserEstado(id_usuario, estado) {
+  return apiFetch(`/usuarios/${id_usuario}/estado`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ estado })
+  });
 }
 
 // Obtener lista de clientes
