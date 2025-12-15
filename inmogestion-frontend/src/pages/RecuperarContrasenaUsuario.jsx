@@ -17,7 +17,7 @@ export default function RecuperarContrasenaUsuario() {
     setMsg('');
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:4000/api/password-recovery/forgot-password-usuario', {
+         const res = await fetch('/api/password-recovery/forgot-password-usuario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: correo })

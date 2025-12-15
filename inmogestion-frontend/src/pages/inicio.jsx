@@ -19,7 +19,7 @@ export default function Inicio() {
   useEffect(() => {
     const fetchPropiedades = async () => {
       try {
-        const response = await fetch('http://localhost:4000/api/propiedades?limit=8');
+        const response = await fetch('/api/propiedades?limit=8');
         const data = await response.json();
         // Filtrar solo propiedades disponibles
         const disponibles = data.filter(p => p.estado_propiedad === 'Disponible');
@@ -201,7 +201,7 @@ export default function Inicio() {
                 <div className="relative h-56 overflow-hidden bg-gray-200">
                   {propiedad.imagen_principal ? (
                     <img
-                      src={`http://localhost:4000${propiedad.imagen_principal}`}
+                      src={propiedad.imagen_principal.startsWith('http') ? propiedad.imagen_principal : propiedad.imagen_principal.startsWith('/') ? propiedad.imagen_principal : `/${propiedad.imagen_principal}`}
                       alt={propiedad.titulo_propiedad || propiedad.tipo_propiedad}
                       className="w-full h-full object-cover"
                       onError={(e) => {

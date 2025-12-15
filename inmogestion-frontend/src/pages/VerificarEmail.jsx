@@ -24,7 +24,7 @@ const VerificarEmail = () => {
           ? `/api/auth/verificar-email-cliente/${token}`
           : `/api/auth/verificar-email-usuario/${token}`;
 
-        const response = await axios.get(`http://localhost:4000${endpoint}`);
+        const response = await axios.get(`/api${endpoint}`);
         setEstado('exito');
         setMensaje(response.data.message || 'Correo verificado exitosamente');
         

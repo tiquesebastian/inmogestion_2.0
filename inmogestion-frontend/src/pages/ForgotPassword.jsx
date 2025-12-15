@@ -14,7 +14,7 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:4000/api/password-recovery/forgot-password-usuario', {
+      const response = await fetch('/api/password-recovery/forgot-password-usuario', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

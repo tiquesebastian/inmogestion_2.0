@@ -39,7 +39,7 @@ export default function ResetPassword() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:4000/api/password-recovery/reset-password-usuario', {
+      const response = await fetch('/api/password-recovery/reset-password-usuario', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

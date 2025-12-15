@@ -34,8 +34,8 @@ export const iniciarTareaRecordatorios = () => {
         INNER JOIN cliente c ON v.id_cliente = c.id_cliente
         INNER JOIN propiedad p ON v.id_propiedad = p.id_propiedad
         LEFT JOIN usuario u ON v.id_agente = u.id_usuario
-        WHERE v.fecha_visita = ?
-          AND v.estado_visita = 'Pendiente'
+        WHERE DATE(v.fecha_visita) = ?
+          AND v.estado = 'Pendiente'
           AND (v.recordatorio_enviado IS NULL OR v.recordatorio_enviado = 0)
       `, [fechaManana]);
 

@@ -45,7 +45,7 @@ export default function CargaMasiva() {
       formData.append('tipo_documento', tipoDocumento);
       formData.append('descripcion', descripcion);
 
-      const response = await fetch('http://localhost:4000/api/documentos-clientes/subir', {
+      const response = await fetch('/api/documentos-clientes/subir', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

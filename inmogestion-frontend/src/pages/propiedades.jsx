@@ -20,7 +20,7 @@ export default function Propiedades() {
   const fetchPropiedades = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:4000/api/propiedades');
+      const response = await fetch('/api/propiedades');
       const data = await response.json();
       setPropiedades(data);
     } catch (error) {
@@ -160,7 +160,7 @@ export default function Propiedades() {
                 <div className="relative h-56 overflow-hidden">
                   {propiedad.imagen_principal ? (
                     <img
-                      src={`http://localhost:4000${propiedad.imagen_principal}`}
+                      src={propiedad.imagen_principal.startsWith('http') ? propiedad.imagen_principal : propiedad.imagen_principal.startsWith('/') ? propiedad.imagen_principal : `/${propiedad.imagen_principal}`}
                       alt={propiedad.titulo_propiedad || propiedad.tipo_propiedad}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       onError={(e) => {

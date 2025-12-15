@@ -71,7 +71,7 @@ export default function ContratosAdmin() {
 
   const descargarContrato = async (contratoId) => {
     try {
-      const response = await fetch(`http://localhost:4000/api/contratos-documentos/descargar/${contratoId}`, {
+      const response = await fetch(`/api/contratos-documentos/descargar/${contratoId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

@@ -23,7 +23,7 @@ const ReenviarVerificacion = ({ tipo = 'cliente' }) => {
         ? '/api/auth/reenviar-verificacion-cliente'
         : '/api/auth/reenviar-verificacion-usuario';
 
-      const response = await axios.post(`http://localhost:4000${endpoint}`, { correo });
+      const response = await axios.post(`/api${endpoint}`, { correo });
       
       setEstado('exito');
       setMensaje(response.data.message || 'Correo de verificación reenviado. Revisa tu bandeja.');

@@ -38,8 +38,8 @@ export default function Login() {
 
     try {
       const endpoint = tipoLogin === "cliente" 
-        ? "http://localhost:4000/api/auth/login-cliente"
-        : "http://localhost:4000/api/auth/login";
+        ? "/api/auth/login-cliente"
+        : "/api/auth/login";
       
       const body = tipoLogin === "cliente"
         ? { usuario, contrasena: password }
@@ -47,7 +47,8 @@ export default function Login() {
 
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        credentials: "include",
         body: JSON.stringify(body),
       });
 

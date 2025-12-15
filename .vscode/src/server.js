@@ -64,6 +64,11 @@ app.get('/', (req, res) => {
   res.send('Servidor funcionando correctamente 🚀 v4');
 });
 
+// Ruta de test simple
+app.get('/test', (req, res) => {
+  res.json({ mensaje: 'Backend respondiendo correctamente desde Railway', timestamp: new Date() });
+});
+
 // Rutas principales protegidas con autenticación y autorización
 
 

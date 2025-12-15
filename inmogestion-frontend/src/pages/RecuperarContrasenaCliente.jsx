@@ -14,7 +14,7 @@ export default function RecuperarContrasenaCliente() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:4000/api/password-recovery/forgot-password-cliente', {
+      const response = await fetch('/api/password-recovery/forgot-password-cliente', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

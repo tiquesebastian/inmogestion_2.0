@@ -12,7 +12,7 @@ export default function DocumentosCliente() {
 
   const cargarClientes = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/clientes', {
+      const response = await fetch('/api/clientes', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -27,7 +27,7 @@ export default function DocumentosCliente() {
   const cargarDocumentos = async (clienteId) => {
     setCargando(true);
     try {
-      const response = await fetch(`http://localhost:4000/api/documentos-clientes/cliente/${clienteId}`, {
+      const response = await fetch(`/api/documentos-clientes/cliente/${clienteId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -52,14 +52,14 @@ export default function DocumentosCliente() {
 
   const descargarDocumento = (id, nombreArchivo) => {
     const token = localStorage.getItem('token');
-    window.open(`http://localhost:4000/api/documentos-clientes/descargar/${id}?token=${token}`, '_blank');
+    window.open(`/api/documentos-clientes/descargar/${id}?token=${token}`, '_blank');
   };
 
   const eliminarDocumento = async (id) => {
     if (!window.confirm('¿Estás seguro de eliminar este documento?')) return;
 
     try {
-      const response = await fetch(`http://localhost:4000/api/documentos-clientes/${id}`, {
+      const response = await fetch(`/api/documentos-clientes/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
