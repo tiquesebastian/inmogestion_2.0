@@ -22,11 +22,18 @@ const toQuery = (params = {}) => {
 async function apiFetch(path, options = {}) {
   const silent = options.silent || false;
   const fullUrl = `${API_BASE}${path}`;
+  const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json', ...(options.headers || {}) };
+  try {
+    const token = localStorage.getItem('token');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  } catch (_) {
+    // localStorage no disponible (SSR), continuar sin token
+  }
   const res = await fetch(fullUrl, {
     method: options.method || 'GET',
     mode: 'cors',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', ...(options.headers || {}) },
+    headers,
     ...options,
   });
   const contentType = res.headers.get('content-type') || '';

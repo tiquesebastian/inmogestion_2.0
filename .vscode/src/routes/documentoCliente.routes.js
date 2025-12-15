@@ -11,7 +11,7 @@ import {
 import { verificarToken } from '../middleware/auth.middleware.js';
 
 // Todas las rutas requieren autenticación
-router.use(verificarToken);
+router.use(verificarToken());
 
 // Subir documento
 router.post('/subir', upload.single('documento'), subirDocumento);
