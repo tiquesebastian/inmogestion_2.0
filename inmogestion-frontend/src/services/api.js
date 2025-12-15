@@ -630,10 +630,26 @@ export async function uploadImagenPropiedad(idPropiedad, file, prioridad = 0, de
   if (descripcion) formData.append('descripcion', descripcion);
   
   try {
-    return await apiFetch(`/imagenes/propiedad`, {
+    const fullUrl = `/api/imagenes/propiedad`;
+    const res = await fetch(fullUrl, {
       method: 'POST',
-      body: formData,
+      mode: 'cors',
+      credentials: 'include',
+      body: formData  // NO incluir Content-Type header para FormData
     });
+    const contentType = res.headers.get('content-type') || '';
+    const text = await res.text();
+    let data = text;
+    if (contentType.includes('application/json')) {
+      try { data = JSON.parse(text); } catch (e) { /* ignore */ }
+    }
+    if (!res.ok) {
+      const message = (data && data.message) || `Error ${res.status}`;
+      const error = new Error(message);
+      error.status = res.status;
+      throw error;
+    }
+    return data;
   } catch (e) {
     throw new Error('Error al subir imagen: ' + e.message);
   }

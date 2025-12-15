@@ -110,11 +110,30 @@ export const updatePropiedad = async (id_propiedad, data) => {
     id_usuario
   } = data;
 
+  // Construir query dinámicamente solo con campos definidos
+  const updates = [];
+  const values = [];
+
+  if (tipo_propiedad !== undefined) { updates.push('tipo_propiedad=?'); values.push(tipo_propiedad); }
+  if (direccion_formato !== undefined) { updates.push('direccion_formato=?'); values.push(direccion_formato); }
+  if (precio_propiedad !== undefined) { updates.push('precio_propiedad=?'); values.push(precio_propiedad); }
+  if (area_m2 !== undefined) { updates.push('area_m2=?'); values.push(area_m2); }
+  if (num_habitaciones !== undefined) { updates.push('num_habitaciones=?'); values.push(num_habitaciones); }
+  if (num_banos !== undefined) { updates.push('num_banos=?'); values.push(num_banos); }
+  if (descripcion !== undefined) { updates.push('descripcion=?'); values.push(descripcion); }
+  if (estado_propiedad !== undefined) { updates.push('estado_propiedad=?'); values.push(estado_propiedad); }
+  if (id_barrio !== undefined && id_barrio !== '') { updates.push('id_barrio=?'); values.push(id_barrio); }
+  if (id_usuario !== undefined) { updates.push('id_usuario=?'); values.push(id_usuario); }
+
+  if (updates.length === 0) {
+    return { affectedRows: 0 }; // No hay campos para actualizar
+  }
+
+  values.push(id_propiedad); // Agregar el ID al final para WHERE
+
   const [result] = await db.query(
-    `UPDATE propiedad 
-     SET tipo_propiedad=?, direccion_formato=?, precio_propiedad=?, area_m2=?, num_habitaciones=?, num_banos=?, descripcion=?, estado_propiedad=?, id_barrio=?, id_usuario=?
-     WHERE id_propiedad=?`,
-    [tipo_propiedad, direccion_formato, precio_propiedad, area_m2, num_habitaciones, num_banos, descripcion, estado_propiedad, id_barrio, id_usuario, id_propiedad]
+    `UPDATE propiedad SET ${updates.join(', ')} WHERE id_propiedad=?`,
+    values
   );
 
   return result;
