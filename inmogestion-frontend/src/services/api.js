@@ -206,7 +206,6 @@ export async function getUsers() {
 export async function updateUserEstado(id_usuario, estado) {
   return apiFetch(`/usuarios/${id_usuario}/estado`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ estado })
   });
 }
