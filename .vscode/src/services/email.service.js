@@ -70,10 +70,10 @@ const enviarEmail = async (mailOptions) => {
   }
 };
 
-// Verificar conexión al iniciar
-if (useResendAPI) {
-  console.log('✅ Usando API de Resend (sin SMTP) - Email listo');
-} else {
+// Verificar conexión al iniciar (solo en desarrollo con SMTP)
+if (process.env.NODE_ENV === 'production' || process.env.EMAIL_PROVIDER === 'resend-api') {
+  console.log('✅ Email configurado (API/SMTP ready)');
+} else if (process.env.NODE_ENV !== 'production') {
   transporter.verify(function (error, success) {
     if (error) {
       console.error('❌ Error de conexión SMTP:', error.message);
