@@ -23,16 +23,25 @@ async function apiFetch(path, options = {}) {
   const silent = options.silent || false;
   const fullUrl = `${API_BASE}${path}`;
   const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json', ...(options.headers || {}) };
+  
+  // Intentar obtener token de localStorage
+  let token = null;
   try {
-    const user = localStorage.getItem('user');
-    if (user) {
-      const parsed = JSON.parse(user);
-      const token = parsed?.token;
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      const parsed = JSON.parse(userStr);
+      token = parsed?.token || null;
     }
-  } catch (_) {
-    // localStorage no disponible (SSR), continuar sin token
+  } catch (err) {
+    console.warn('[apiFetch] Error leyendo token:', err.message);
   }
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  } else {
+    console.warn('[apiFetch] No se encontró token para:', path);
+  }
+  
   const res = await fetch(fullUrl, {
     method: options.method || 'GET',
     mode: 'cors',
