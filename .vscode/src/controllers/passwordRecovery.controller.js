@@ -39,27 +39,25 @@ export const solicitarRecuperacionUsuario = async (req, res) => {
       [resetTokenHash, resetTokenExpires, usuario.id_usuario]
     );
 
-    // Enviar email (con token original, no el hash)
-    const emailResult = await enviarEmailRecuperacionPassword({
+    // Enviar email en background (sin esperar respuesta)
+    enviarEmailRecuperacionPassword({
       email: usuario.correo,
       nombre: `${usuario.nombre} ${usuario.apellido}`,
       resetToken,
       tipoUsuario: 'usuario'
-    });
+    }).catch(err => console.error('Error enviando email:', err));
 
     // Auditar solicitud de recuperación
     await audit.passwordReset(usuario.correo, 'usuario', req, 'request').catch(err => 
       console.error('Error auditando solicitud reset:', err)
     );
 
-    // Devolver token en respuesta (para testing sin email externo)
-    // Token es seguro porque está hasheado en BD y expira en 1h
+    // Devolver token inmediatamente sin esperar email
     res.json({ 
       success: true,
       message: 'Si el email existe, recibirás un correo con instrucciones',
       token: resetToken,
-      resetUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`,
-      emailSent: emailResult.success
+      resetUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`
     });
   } catch (error) {
     console.error('Error en solicitarRecuperacionUsuario:', error);
@@ -101,26 +99,25 @@ export const solicitarRecuperacionCliente = async (req, res) => {
       [resetTokenHash, resetTokenExpires, cliente.id_cliente]
     );
 
-    // Enviar email (con token original, no el hash)
-    const emailResult = await enviarEmailRecuperacionPassword({
+    // Enviar email en background (sin esperar respuesta)
+    enviarEmailRecuperacionPassword({
       email: cliente.correo_cliente,
       nombre: `${cliente.nombre_cliente} ${cliente.apellido_cliente}`,
       resetToken,
       tipoUsuario: 'cliente'
-    });
+    }).catch(err => console.error('Error enviando email:', err));
 
     // Auditar solicitud de recuperación
     await audit.passwordReset(cliente.correo_cliente, 'cliente', req, 'request').catch(err => 
       console.error('Error auditando solicitud reset cliente:', err)
     );
 
-    // Devolver token en respuesta (para testing sin email externo)
+    // Devolver token inmediatamente sin esperar email
     res.json({ 
       success: true,
       message: 'Si el email existe, recibirás un correo con instrucciones',
       token: resetToken,
-      resetUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password-cliente?token=${resetToken}`,
-      emailSent: emailResult.success
+      resetUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password-cliente?token=${resetToken}`
     });
   } catch (error) {
     console.error('Error en solicitarRecuperacionCliente:', error);
