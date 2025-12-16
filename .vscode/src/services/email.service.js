@@ -71,16 +71,18 @@ const enviarEmail = async (mailOptions) => {
 };
 
 // Verificar conexión al iniciar
-transporter.verify(function (error, success) {
-  if (useResendAPI) {
-    console.log('✅ Usando API de Resend (sin SMTP)');
-  } else if (error) {
-    console.error('❌ Error de conexión SMTP:', error.message);
-    console.log('📧 Verifica EMAIL_USER, EMAIL_PASS, EMAIL_HOST y EMAIL_PORT');
-  } else {
-    console.log('✅ Servidor SMTP listo para enviar emails');
-  }
-});
+if (useResendAPI) {
+  console.log('✅ Usando API de Resend (sin SMTP) - Email listo');
+} else {
+  transporter.verify(function (error, success) {
+    if (error) {
+      console.error('❌ Error de conexión SMTP:', error.message);
+      console.log('📧 Verifica EMAIL_USER, EMAIL_PASS, EMAIL_HOST y EMAIL_PORT');
+    } else {
+      console.log('✅ Servidor SMTP listo para enviar emails');
+    }
+  });
+}
 /*
 transporter.verify((error, success) => {
   if (error) {
