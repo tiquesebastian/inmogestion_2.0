@@ -286,6 +286,7 @@ export const actualizarEstadoUsuario = async (req, res) => {
   try {
     const { id } = req.params;
     const { estado } = req.body;
+    console.log('[actualizarEstadoUsuario] id:', id, 'estado:', estado, 'user:', req.user);
     if (!estado || !['Activo','Inactivo','Bloqueado'].includes(estado)) {
       return res.status(400).json({ message: 'Estado inválido' });
     }

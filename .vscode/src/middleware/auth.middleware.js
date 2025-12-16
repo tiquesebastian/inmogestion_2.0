@@ -7,6 +7,9 @@ export const verificarToken = (rolesPermitidos = []) => {
     const authHeader = req.headers["authorization"] || req.headers["Authorization"];
     const token = authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
 
+    console.log('[verificarToken] authHeader:', authHeader ? 'presente' : 'ausente');
+    console.log('[verificarToken] token extraído:', token ? 'OK' : 'NO');
+
     if (!token) {
       return res.status(403).json({ message: "Token requerido" });
     }
@@ -14,16 +17,19 @@ export const verificarToken = (rolesPermitidos = []) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || "secreto123");
       req.user = decoded;
+      console.log('[verificarToken] decoded user:', JSON.stringify(decoded));
 
       if (
         rolesPermitidos.length > 0 &&
         !rolesPermitidos.includes(decoded.rol)
       ) {
+        console.log('[verificarToken] Rol rechazado. Esperado:', rolesPermitidos, 'Recibido:', decoded.rol);
         return res.status(403).json({ message: "No tienes permiso" });
       }
 
       next();
     } catch (error) {
+      console.log('[verificarToken] Error verificando token:', error.message);
       return res.status(401).json({ message: "Token inválido o expirado" });
     }
   };
