@@ -21,6 +21,7 @@ import contratoDocumentoRoutes from "./routes/contratoDocumento.routes.js";
 import documentoClienteRoutes from "./routes/documentoCliente.routes.js";
 import passwordRecoveryRoutes from "./routes/passwordRecovery.routes.js";
 import emailVerificationRoutes from "./routes/emailVerification.routes.js";
+import testRoutes from "./routes/test.routes.js";
 
 // Servicios
 import { iniciarTareaRecordatorios } from "./services/recordatorios.service.js";
@@ -120,6 +121,9 @@ app.use("/api/auth", authRoutes);
 app.use("/api/auth", authClienteRoutes);
 app.use("/api/auth", emailVerificationRoutes);
 app.use("/api/password-recovery", passwordRecoveryRoutes);
+
+// Ruta de prueba de email (solo para desarrollo/testing)
+app.use("/api/test", testRoutes);
 
 // Iniciar el servidor en el puerto configurado
 app.listen(PORT, () => {

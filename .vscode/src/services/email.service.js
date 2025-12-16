@@ -14,10 +14,21 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
+  },
+  tls: {
+    rejectUnauthorized: false // Permite certificados auto-firmados (necesario en algunos hosts)
   }
 });
 
-// Verificar conexión al iniciar (comentado para desarrollo)
+// Verificar conexión al iniciar
+transporter.verify(function (error, success) {
+  if (error) {
+    console.error('❌ Error de conexión SMTP:', error.message);
+    console.log('📧 Verifica EMAIL_USER, EMAIL_PASS, EMAIL_HOST y EMAIL_PORT');
+  } else {
+    console.log('✅ Servidor SMTP listo para enviar emails');
+  }
+});
 /*
 transporter.verify((error, success) => {
   if (error) {
@@ -85,7 +96,7 @@ export const enviarEmailContratoGenerado = async (contratoData) => {
             <p>Puedes descargar tu contrato iniciando sesión en tu panel de cliente:</p>
             
             <div style="text-align: center;">
-              <a href="http://localhost:5173/login-cliente" class="btn">🔐 Acceder a Mi Panel</a>
+              <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login-cliente" class="btn">🔐 Acceder a Mi Panel</a>
             </div>
             
             <p style="margin-top: 30px; font-size: 14px; color: #6b7280;">
@@ -310,9 +321,10 @@ export const enviarEmailRecuperacionPassword = async (emailData) => {
   const { email, nombre, resetToken, tipoUsuario } = emailData;
 
   // URL del frontend según el tipo de usuario
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   const resetUrl = tipoUsuario === 'cliente' 
-    ? `http://localhost:5173/reset-password-cliente?token=${resetToken}`
-    : `http://localhost:5173/reset-password?token=${resetToken}`;
+    ? `${frontendUrl}/reset-password-cliente?token=${resetToken}`
+    : `${frontendUrl}/reset-password?token=${resetToken}`;
 
   const mailOptions = {
     from: process.env.EMAIL_FROM,
