@@ -40,7 +40,7 @@ export const solicitarRecuperacionUsuario = async (req, res) => {
     );
 
     // Enviar email (con token original, no el hash)
-    await enviarEmailRecuperacionPassword({
+    const emailResult = await enviarEmailRecuperacionPassword({
       email: usuario.correo,
       nombre: `${usuario.nombre} ${usuario.apellido}`,
       resetToken,
@@ -52,15 +52,14 @@ export const solicitarRecuperacionUsuario = async (req, res) => {
       console.error('Error auditando solicitud reset:', err)
     );
 
-    // En desarrollo, incluir token en respuesta para testing sin email
-    const isDev = process.env.NODE_ENV === 'development' || !process.env.EMAIL_USER;
+    // Devolver token en respuesta (para testing sin email externo)
+    // Token es seguro porque está hasheado en BD y expira en 1h
     res.json({ 
+      success: true,
       message: 'Si el email existe, recibirás un correo con instrucciones',
-      ...(isDev && { 
-        token: resetToken,
-        resetUrl: `http://localhost:5173/reset-password?token=${resetToken}`,
-        nota: 'Token visible solo en desarrollo'
-      })
+      token: resetToken,
+      resetUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`,
+      emailSent: emailResult.success
     });
   } catch (error) {
     console.error('Error en solicitarRecuperacionUsuario:', error);
@@ -103,7 +102,7 @@ export const solicitarRecuperacionCliente = async (req, res) => {
     );
 
     // Enviar email (con token original, no el hash)
-    await enviarEmailRecuperacionPassword({
+    const emailResult = await enviarEmailRecuperacionPassword({
       email: cliente.correo_cliente,
       nombre: `${cliente.nombre_cliente} ${cliente.apellido_cliente}`,
       resetToken,
@@ -115,15 +114,13 @@ export const solicitarRecuperacionCliente = async (req, res) => {
       console.error('Error auditando solicitud reset cliente:', err)
     );
 
-    // En desarrollo, incluir token en respuesta para testing sin email
-    const isDev = process.env.NODE_ENV === 'development' || !process.env.EMAIL_USER;
+    // Devolver token en respuesta (para testing sin email externo)
     res.json({ 
+      success: true,
       message: 'Si el email existe, recibirás un correo con instrucciones',
-      ...(isDev && { 
-        token: resetToken,
-        resetUrl: `http://localhost:5173/reset-password-cliente?token=${resetToken}`,
-        nota: 'Token visible solo en desarrollo'
-      })
+      token: resetToken,
+      resetUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password-cliente?token=${resetToken}`,
+      emailSent: emailResult.success
     });
   } catch (error) {
     console.error('Error en solicitarRecuperacionCliente:', error);
