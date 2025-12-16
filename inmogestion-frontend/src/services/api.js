@@ -49,6 +49,26 @@ async function apiFetch(path, options = {}) {
     headers,
     ...options,
   });
+  // Manejo global de auth
+  if (res.status === 401) {
+    try { localStorage.removeItem('user'); } catch (_) {}
+    const path = window.location.pathname || '/';
+    const loginPath = (path.startsWith('/admin') || path.startsWith('/agente') || path.startsWith('/inmogestion'))
+      ? '/inmogestion'
+      : '/login';
+    const returnTo = encodeURIComponent(`${path}${window.location.search}`);
+    if (!silent) window.location.href = `${loginPath}?returnTo=${returnTo}`;
+    const err = new Error('No autenticado');
+    err.status = 401;
+    err.silent = silent;
+    throw err;
+  }
+  if (res.status === 403) {
+    const err = new Error('No autorizado: permisos insuficientes');
+    err.status = 403;
+    err.silent = silent;
+    throw err;
+  }
   const contentType = res.headers.get('content-type') || '';
   const text = await res.text();
   let data = text;

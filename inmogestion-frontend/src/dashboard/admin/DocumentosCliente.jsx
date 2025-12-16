@@ -12,10 +12,13 @@ export default function DocumentosCliente() {
 
   const cargarClientes = async () => {
     try {
+      let token = null;
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) token = (JSON.parse(userStr)?.token) || null;
+      } catch (_) {}
       const response = await fetch('/api/clientes', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       const data = await response.json();
       setClientes(data);
@@ -27,10 +30,13 @@ export default function DocumentosCliente() {
   const cargarDocumentos = async (clienteId) => {
     setCargando(true);
     try {
+      let token = null;
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) token = (JSON.parse(userStr)?.token) || null;
+      } catch (_) {}
       const response = await fetch(`/api/documentos-clientes/cliente/${clienteId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       const data = await response.json();
       setDocumentos(data);
@@ -51,19 +57,27 @@ export default function DocumentosCliente() {
   };
 
   const descargarDocumento = (id, nombreArchivo) => {
-    const token = localStorage.getItem('token');
-    window.open(`/api/documentos-clientes/descargar/${id}?token=${token}`, '_blank');
+    let token = null;
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) token = (JSON.parse(userStr)?.token) || null;
+    } catch (_) {}
+    const qs = token ? `?token=${encodeURIComponent(token)}` : '';
+    window.open(`/api/documentos-clientes/descargar/${id}${qs}`, '_blank');
   };
 
   const eliminarDocumento = async (id) => {
     if (!window.confirm('¿Estás seguro de eliminar este documento?')) return;
 
     try {
+      let token = null;
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) token = (JSON.parse(userStr)?.token) || null;
+      } catch (_) {}
       const response = await fetch(`/api/documentos-clientes/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
 
       if (response.ok) {

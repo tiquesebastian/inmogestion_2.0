@@ -35,6 +35,23 @@ export default function CargaMasiva() {
       return;
     }
 
+    // Verificación previa de token válido
+    let token = null;
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const parsed = JSON.parse(userStr);
+        token = parsed?.token || null;
+      }
+    } catch (_) {}
+    const looksLikeJwt = token && typeof token === 'string' && token.split('.').length === 3;
+    if (!looksLikeJwt) {
+      setMensaje('⚠️ Sesión expirada. Ingresa de nuevo.');
+      const returnTo = encodeURIComponent('/admin/carga-masiva');
+      window.location.href = `/inmogestion?returnTo=${returnTo}`;
+      return;
+    }
+
     setCargando(true);
     setMensaje("");
 
@@ -47,9 +64,7 @@ export default function CargaMasiva() {
 
       const response = await fetch('/api/documentos-clientes/subir', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         body: formData
       });
 
@@ -67,7 +82,13 @@ export default function CargaMasiva() {
         setDescripcion("");
         document.getElementById('fileInput').value = '';
       } else {
-        setMensaje(`❌ ${result.error || 'Error al subir documento'}`);
+        if (response.status === 401) {
+          setMensaje('⚠️ Sesión expirada. Ingresa de nuevo.');
+          const returnTo = encodeURIComponent('/admin/carga-masiva');
+          window.location.href = `/inmogestion?returnTo=${returnTo}`;
+        } else {
+          setMensaje(`❌ ${result.error || 'Error al subir documento'}`);
+        }
       }
     } catch (err) {
       setMensaje("❌ Error al subir archivo");

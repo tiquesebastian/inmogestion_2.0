@@ -122,20 +122,7 @@ export default function AdminDashboard() {
           >
             Reporte Contratos
           </Link>
-          <Link 
-            to="/admin/carga-masiva"
-            onClick={() => setSidebarOpen(false)}
-            className={`block px-4 py-2 rounded transition ${location.pathname.includes('carga-masiva') ? 'bg-yellow-500 text-blue-900 font-semibold' : 'hover:bg-blue-800'}`}
-          >
-            📂 Carga Masiva
-          </Link>
-          <Link 
-            to="/admin/documentos-cliente"
-            onClick={() => setSidebarOpen(false)}
-            className={`block px-4 py-2 rounded transition ${location.pathname.includes('documentos-cliente') ? 'bg-yellow-500 text-blue-900 font-semibold' : 'hover:bg-blue-800'}`}
-          >
-            📁 Ver Documentos
-          </Link>
+          {/* Oculto: módulos de documentos temporalmente deshabilitados */}
         </nav>
         <button
           onClick={handleLogout}
@@ -187,8 +174,7 @@ export default function AdminDashboard() {
             <Route path="registrar-agente" element={<RegistrarAgente key="registrar-agente" />} />
             <Route path="generar-contrato" element={<GenerarContrato key="generar-contrato" />} />
             <Route path="contratos" element={<ContratosAdmin key="contratos" />} />
-            <Route path="carga-masiva" element={<CargaMasiva key="carga-masiva" />} />
-            <Route path="documentos-cliente" element={<DocumentosCliente key="documentos-cliente" />} />
+            {/* Oculto: rutas documentos */}
           </Routes>
         </div>
       </main>

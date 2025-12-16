@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAllContratosDocumentos } from '../../services/api';
+import { getAllContratosDocumentos, getUrlDescargarContrato } from '../../services/api';
 
 export default function ContratosAdmin() {
   const [contratos, setContratos] = useState([]);
@@ -71,11 +71,18 @@ export default function ContratosAdmin() {
 
   const descargarContrato = async (contratoId) => {
     try {
-      const response = await fetch(`/api/contratos-documentos/descargar/${contratoId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+      let token = null;
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const parsed = JSON.parse(userStr);
+          token = parsed?.token || null;
         }
-      });
+      } catch (_) {}
+
+      const url = getUrlDescargarContrato(contratoId);
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await fetch(url, { headers });
 
       if (!response.ok) {
         const error = await response.json();
@@ -85,13 +92,13 @@ export default function ContratosAdmin() {
 
       // Convertir a blob y descargar
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const objectUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = objectUrl;
       a.download = `contrato_${contratoId}.pdf`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(objectUrl);
       document.body.removeChild(a);
     } catch (error) {
       console.error('Error al descargar:', error);

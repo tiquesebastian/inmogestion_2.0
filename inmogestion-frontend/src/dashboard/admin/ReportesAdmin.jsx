@@ -226,15 +226,19 @@ export default function ReportesAdmin() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-xl font-bold mb-4 text-gray-800">📍 Ventas por Localidad</h3>
               <div className="space-y-3">
-                {data.ventas_por_localidad?.slice(0, 5).map((loc) => (
-                  <div key={loc.id_localidad} className="flex justify-between items-center border-b pb-3">
-                    <div>
-                      <p className="font-semibold">{loc.nombre_localidad}</p>
-                      <p className="text-sm text-gray-600">{loc.total_contratos} ventas</p>
+                {Array.isArray(data.ventas_por_localidad) && data.ventas_por_localidad.length > 0 ? (
+                  data.ventas_por_localidad.slice(0, 5).map((loc) => (
+                    <div key={loc.id_localidad || loc.nombre_localidad} className="flex justify-between items-center border-b pb-3">
+                      <div>
+                        <p className="font-semibold">{loc.nombre_localidad || 'Sin localidad'}</p>
+                        <p className="text-sm text-gray-600">{loc.total_contratos || 0} ventas</p>
+                      </div>
+                      <p className="font-bold text-blue-600">{formatCurrency(loc.valor_total || 0)}</p>
                     </div>
-                    <p className="font-bold text-blue-600">{formatCurrency(loc.valor_total)}</p>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-6">No hay ventas por localidad en este periodo</div>
+                )}
               </div>
             </div>
           </div>
