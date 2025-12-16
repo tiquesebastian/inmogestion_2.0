@@ -73,8 +73,8 @@ app.get('/test', (req, res) => {
 
 
 
-// Rutas de usuarios: requieren token y rol admin (rol 1)
-app.use("/api/usuarios", verificarToken(), verificarRol(1), usuarioRoutes);
+// Rutas de usuarios: requieren token; rol se puede reforzar en controladores si se necesita
+app.use("/api/usuarios", verificarToken(), usuarioRoutes);
 
 // Rutas de clientes: requieren token (usuario autenticado)
 //app.use("/api/clientes", verificarToken, clienteRoutes);
