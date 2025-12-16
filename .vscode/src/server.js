@@ -35,8 +35,8 @@ if (process.env.NODE_ENV !== 'production') {
 
 const app = express();
 
-// Confiar en proxies (Railway, Vercel, etc.) para headers X-Forwarded-*
-app.set('trust proxy', true);
+// Confiar en el primer proxy (Railway) para X-Forwarded-*
+app.set('trust proxy', 1);
 
 // Puerto en el que correrá el servidor, puede venir del .env o usar 4000 por defecto
 const PORT = process.env.PORT || 4000;
