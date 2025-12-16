@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import axios from 'axios';
 import dotenv from 'dotenv';
 
 // Cargar .env solo en desarrollo
@@ -6,23 +7,74 @@ if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
 }
 
-// Configurar transporter de Nodemailer
+// ============================================
+// OPCIÓN 1: SMTP (Gmail, Resend, etc)
+// ============================================
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.EMAIL_PORT) || 587,
-  secure: process.env.EMAIL_SECURE === 'true', // true para 465, false para otros puertos
+  secure: process.env.EMAIL_SECURE === 'true',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
   tls: {
-    rejectUnauthorized: false // Permite certificados auto-firmados (necesario en algunos hosts)
+    rejectUnauthorized: false
   }
 });
 
+// ============================================
+// OPCIÓN 2: API REST de Resend (sin SMTP)
+// ============================================
+const useResendAPI = process.env.EMAIL_PROVIDER === 'resend-api';
+
+const resendAPIKey = process.env.EMAIL_PASS; // Reutilizamos EMAIL_PASS para la API key
+const resendEmail = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+
+// Helper para enviar con Resend API
+const enviarConResendAPI = async (to, subject, html) => {
+  try {
+    const response = await axios.post('https://api.resend.com/emails', {
+      from: resendEmail,
+      to: to,
+      subject: subject,
+      html: html
+    }, {
+      headers: {
+        'Authorization': `Bearer ${resendAPIKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    return { success: true, messageId: response.data.id };
+  } catch (error) {
+    console.error('❌ Error con API Resend:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+// Helper unificado para enviar emails
+const enviarEmail = async (mailOptions) => {
+  if (useResendAPI) {
+    console.log('📧 Usando API de Resend...');
+    return enviarConResendAPI(mailOptions.to, mailOptions.subject, mailOptions.html);
+  } else {
+    console.log('📧 Usando SMTP...');
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      return { success: true, messageId: info.messageId };
+    } catch (error) {
+      console.error('❌ Error SMTP:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+};
+
 // Verificar conexión al iniciar
 transporter.verify(function (error, success) {
-  if (error) {
+  if (useResendAPI) {
+    console.log('✅ Usando API de Resend (sin SMTP)');
+  } else if (error) {
     console.error('❌ Error de conexión SMTP:', error.message);
     console.log('📧 Verifica EMAIL_USER, EMAIL_PASS, EMAIL_HOST y EMAIL_PORT');
   } else {
@@ -118,9 +170,13 @@ export const enviarEmailContratoGenerado = async (contratoData) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email de contrato enviado:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    const resultado = await enviarEmail(mailOptions);
+    if (resultado.success) {
+      console.log('✅ Email de contrato enviado:', resultado.messageId);
+    } else {
+      console.error('❌ Error al enviar email de contrato:', resultado.error);
+    }
+    return resultado;
   } catch (error) {
     console.error('❌ Error al enviar email de contrato:', error);
     return { success: false, error: error.message };
@@ -208,9 +264,13 @@ export const enviarEmailNuevoInteres = async (interesData) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email de interés enviado al agente:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    const resultado = await enviarEmail(mailOptions);
+    if (resultado.success) {
+      console.log('✅ Email de interés enviado al agente:', resultado.messageId);
+    } else {
+      console.error('❌ Error al enviar email de interés:', resultado.error);
+    }
+    return resultado;
   } catch (error) {
     console.error('❌ Error al enviar email de interés:', error);
     return { success: false, error: error.message };
@@ -305,9 +365,13 @@ export const enviarEmailRecordatorioVisita = async (visitaData) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email de recordatorio enviado:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    const resultado = await enviarEmail(mailOptions);
+    if (resultado.success) {
+      console.log('✅ Email de recordatorio enviado:', resultado.messageId);
+    } else {
+      console.error('❌ Error al enviar email de recordatorio:', resultado.error);
+    }
+    return resultado;
   } catch (error) {
     console.error('❌ Error al enviar email de recordatorio:', error);
     return { success: false, error: error.message };
@@ -391,9 +455,13 @@ export const enviarEmailRecuperacionPassword = async (emailData) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email de recuperación enviado:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    const resultado = await enviarEmail(mailOptions);
+    if (resultado.success) {
+      console.log('✅ Email de recuperación enviado:', resultado.messageId);
+    } else {
+      console.error('❌ Error al enviar email de recuperación:', resultado.error);
+    }
+    return resultado;
   } catch (error) {
     console.error('❌ Error al enviar email de recuperación:', error);
     return { success: false, error: error.message };
@@ -418,9 +486,13 @@ export const enviarEmailVerificacion = async (data) => {
     html: `<!DOCTYPE html><html><head><style>body{font-family:Arial,sans-serif;color:#333;} .container{max-width:600px;margin:0 auto;padding:20px;} .header{background:#2563eb;color:#fff;padding:25px;text-align:center;border-radius:8px 8px 0 0;} .content{background:#fff;padding:30px;border:1px solid #e5e7eb;} .btn{display:inline-block;padding:14px 26px;background:#1d4ed8;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;margin:25px 0;} .footer{font-size:12px;color:#6b7280;text-align:center;margin-top:30px;} .warning{background:#fef3c7;border-left:4px solid #f59e0b;padding:12px;margin-top:20px;border-radius:4px;}</style></head><body><div class="container"><div class="header"><h1>InmoGestión</h1><p>Verificación de correo</p></div><div class="content"><h2>Hola ${nombre},</h2><p>Gracias por registrarte. Para activar tu cuenta verifica tu correo:</p><div style="text-align:center"><a class="btn" href="${verifyUrl}">Verificar correo</a></div><p>Si el botón no funciona, copia y pega este enlace:</p><p style="word-break:break-all;font-size:14px"><a href="${verifyUrl}">${verifyUrl}</a></p><div class="warning"><strong>Importante:</strong> El enlace expira en 24 horas.</div><p style="margin-top:25px;font-size:14px;color:#555">Si no creaste esta cuenta puedes ignorar este mensaje.</p></div><div class="footer">© 2025 InmoGestión. Mensaje automático.</div></div></body></html>`
   };
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email verificación enviado:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    const resultado = await enviarEmail(mailOptions);
+    if (resultado.success) {
+      console.log('✅ Email verificación enviado:', resultado.messageId);
+    } else {
+      console.error('❌ Error email verificación:', resultado.error);
+    }
+    return resultado;
   } catch (error) {
     console.error('❌ Error email verificación:', error);
     return { success: false, error: error.message };
